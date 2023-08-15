@@ -1,4 +1,5 @@
 # %%
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 import random
@@ -23,6 +24,7 @@ import utils.ploters as ploters
 import filters
 import utils.bw_converter as bw
 import models.vae as v1
+import utils.image_generator as im_gen
 
 # %%
 importlib.reload(cp)
@@ -32,7 +34,8 @@ importlib.reload(ploters)
 importlib.reload(filters)
 importlib.reload(bw)
 importlib.reload(v1)
-
+importlib.reload(im_gen)
+importlib.reload(im_gen)
 
 
 df = pd.read_csv(paths.getDataSetPath('styles.csv'))
@@ -72,47 +75,17 @@ print(l[0])
 
 Image.open(str(l[0]))
 
-# %%
-from keras.preprocessing.image import ImageDataGenerator
-
-datagen = ImageDataGenerator(
-    rescale=1.0 / 255.0,  # Scale pixel values between 0 and 1
-    # rotation_range=50,
-
-    # Other preprocessing options like rotation, flipping, etc.
-) 
-
-data_dir = paths.BW_IMG_FOLDER
-batch_size = 128
-
-image_generator = datagen.flow_from_directory(
-    data_dir,
-    color_mode="grayscale",
-    target_size=(80, 60),  # Set your desired image dimensions
-    batch_size=batch_size,
-    class_mode='input',  # No class labels, unsupervised learning
-    shuffle=True  # Shuffle the data
-)
+# %% Generator
+importlib.reload(im_gen)
+generator = im_gen.createImageGenerator(paths.BW_IMG_FOLDER)
+im_gen.plotGeneratedImages(generator)
 
 
-# %%
-importlib.reload(ploters)
-it = image_generator.next()
-images = it[0]
-print(images[1].shape)
-ploters.plot_generated_images(images, 1, 5)
-
-
-
-# %%
-
-print(images.shape)
-train_x_flatten=np.reshape(images,(images.shape[0],-1))
-print(train_x_flatten.shape)
-
-# %%
+# %% VAE
 importlib.reload(v1)
-vae, vae_encoder, vae_decoder = v1.getVAE(4800)
+import models.flatVAE as v2
+importlib.reload(v2)
+vae, vae_encoder, vae_decoder = v2.FlatVAE().getVAE(4800)
 v1.plotVAE(vae)
 
 # %%
@@ -129,21 +102,94 @@ vae.compile(optimizer='adam')
 
 # %%
 epoch_count = 100
-batch_size=100
+# batch_size=100
 patience=5
 
 early_stop = keras.callbacks.EarlyStopping(monitor='val_loss', patience=patience, restore_best_weights=True)
 
-history = vae.fit(image_generator,epochs=epoch_count,callbacks=[early_stop])
-# %%
-epochs = 10
-batch_size = 128
+history = vae.fit(generator,epochs=epoch_count,callbacks=[early_stop])
 
-for epoch in range(epochs):
-    print(f"Epoch {epoch+1}/{epochs}")
-    for batch_x in image_generator:  # Assuming the generator yields (batch_x, batch_y)
-        loss = vae.train_on_batch(batch_x[0],batch_x[0])
-        print(f"Batch loss: {loss}")
 # %%
-print(batch_x[0].shape)
+batch_x = next(generator)
+wathes = batch_x[0]
+print(wathes.shape)
+wathes = np.reshape(wathes, (len(wathes),4800))
+print(wathes.shape)
+
+
+# %%
+epochs = 1
+batch_size = 16
+
+history_train_metrics=[]
+for epoch in range(epochs):
+    print(f"Epoch {epoch+1}/{epochs}"),
+    batch_x = next(generator)  # Assuming the generator yields (batch_x, batch_y)
+    
+
+    wathes = batch_x[0]
+    wathes = np.reshape(wathes, (len(wathes),4800))
+    history = vae.fit(wathes, wathes, batch_size=batch_size, verbose=0)
+    history_train_metrics.append(history)
+    train_metrics = vae.evaluate(wathes, wathes, verbose = 0)
+    print(train_metrics)
+    # print('\tTRAIN', end = '')
+    # for i in range(len(vae.metrics_names)):
+    #   print(' {}={:.4f}'.format(vae.metrics_names[i],train_metrics[i]), end = '')
+    # print()
+print("end")
+
+
+
+batch_x = next(generator)
+wathes = batch_x[0][:5]
+print(wathes.shape)
+ploters.plot_generated_images(wathes, 1, 5)
+wathes = np.reshape(wathes, (len(wathes),4800))
+print(wathes.shape)
+result = vae.predict(wathes)
+print(result.shape)
+result = np.reshape(result, (len(result), 80, 60, 1))
+print(result.shape)
+ploters.plot_generated_images(result, 1, 5)
+
+
+# %%
+ploters.plot_history(history_train_metrics, metric='accuracy')
+
+# %%
+encoder_input_size = vae_decoder.layers[0].input_shape[0][1]
+arr = []
+for img in range(10):
+    randoms = []
+    for i in range(encoder_input_size):
+        randoms.append(random.normalvariate(0,1))
+    arr.append(randoms)
+random_sample = np.array(arr)
+print(random_sample.shape)
+# print('Random sample: ',random_sample)
+decoded_x = vae_decoder.predict(random_sample,verbose=0)
+generated = decoded_x.reshape(len(decoded_x), 80, 60, 1)
+ploters.plot_generated_images(generated, 1, 5)
+
+# %%
+num_images = 20
+images_in_cols = 5
+rows = math.ceil(num_images/images_in_cols)
+
+generated_images=[]
+for row in range(rows):
+    single_row_generated_images=[]
+    for col in range(images_in_cols):
+        random_sample = []
+        for i in range(encoder_input_size):
+            random_sample.append(random.normalvariate(0,1))
+        single_row_generated_images.append(random_sample)
+    single_row_generated_images = np.array(single_row_generated_images)
+    decoded_x = vae_decoder.predict(single_row_generated_images,verbose=0)
+    generated = decoded_x.reshape(len(decoded_x), 80, 60, 1)
+    generated_images.append(generated)      
+
+ploters.plot_generated_images(generated_images,rows,images_in_cols)
+
 # %%

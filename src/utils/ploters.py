@@ -84,11 +84,12 @@ def show_confusion_matrix(conf_matrix,class_names,figsize=(10,10)):
         
 
 def plot_generated_images(generated_images, nrows, ncols,no_space_between_plots=False, figsize=(10, 10)):
-  _, axs = plt.subplots(nrows, ncols,figsize=figsize)
+  _, axs = plt.subplots(nrows, ncols,figsize=figsize,squeeze=False)
 
-  for i in range(nrows*ncols):
-      axs[i].axis('off')
-      axs[i].imshow(generated_images[i], cmap='gray')
+  for i in range(nrows):
+    for j in range(ncols):
+      axs[i,j].axis('off')
+      axs[i,j].imshow(generated_images[i][j], cmap='gray')
 
   if no_space_between_plots:
     plt.subplots_adjust(wspace=0,hspace=0)
