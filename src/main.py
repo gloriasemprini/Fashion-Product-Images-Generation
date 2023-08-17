@@ -5,8 +5,6 @@ import matplotlib.pyplot as plt
 import random
 import pandas as pd
 from tensorflow import keras
-from keras import layers
-from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error
@@ -45,26 +43,26 @@ df = pd.read_csv(paths.getDataSetPath('styles.csv'))
 an.showDatasetDetails(df)
 
 
-# %%
+# %% Plot random images from dataframe
 importlib.reload(ploters)
 ids = df['id']
 selected_image_ids = random.sample(ids.tolist(),10)
 ploters.plotImagesById(selected_image_ids)
 
-# %%
+# %% Plot only random whatches
 importlib.reload(filters)
 watches_df = filters.getWatches(df)
 ploters.plotRandomImg(watches_df)
 
 
-# %%
+# %% WARNING: this code create a new folder with only grayscale watches
 importlib.reload(ploters)
 importlib.reload(bw)
 bw.convert_to_bw(watches_df['id'])
 ploters.plotRandomImg(watches_df, path=paths.BW_IMG_FOLDER_INNER)
 
 
-# %%
+# %% Show first image of a directory
 import pathlib
 data_dir = pathlib.Path(paths.BW_IMG_FOLDER_INNER).with_suffix('')
 image_count = len(list(data_dir.glob('*.jpg')))
@@ -100,7 +98,7 @@ log_var=vae.get_layer('log_var').output
 vae.add_loss(v1.vae_loss(vae_input,vae_output,mu,log_var,kl_coefficient,4800))
 vae.compile(optimizer='adam')
 
-# %%
+# %% This code do not work
 epoch_count = 100
 # batch_size=100
 patience=5
@@ -109,21 +107,14 @@ early_stop = keras.callbacks.EarlyStopping(monitor='val_loss', patience=patience
 
 history = vae.fit(generator,epochs=epoch_count,callbacks=[early_stop])
 
-# %%
-batch_x = next(generator)
-wathes = batch_x[0]
-print(wathes.shape)
-wathes = np.reshape(wathes, (len(wathes),4800))
-print(wathes.shape)
-
 
 # %%
-epochs = 1
-batch_size = 16
+epochs = 50
+batch_size = 8
 
 history_train_metrics=[]
 for epoch in range(epochs):
-    print(f"Epoch {epoch+1}/{epochs}"),
+    
     batch_x = next(generator)  # Assuming the generator yields (batch_x, batch_y)
     
 
@@ -132,7 +123,7 @@ for epoch in range(epochs):
     history = vae.fit(wathes, wathes, batch_size=batch_size, verbose=0)
     history_train_metrics.append(history)
     train_metrics = vae.evaluate(wathes, wathes, verbose = 0)
-    print(train_metrics)
+    print(f"Epoch {epoch+1}/{epochs} and {train_metrics}")
     # print('\tTRAIN', end = '')
     # for i in range(len(vae.metrics_names)):
     #   print(' {}={:.4f}'.format(vae.metrics_names[i],train_metrics[i]), end = '')
@@ -140,39 +131,21 @@ for epoch in range(epochs):
 print("end")
 
 
-
 batch_x = next(generator)
 wathes = batch_x[0][:5]
 print(wathes.shape)
-ploters.plot_generated_images(wathes, 1, 5)
+ploters.plot_generated_images([wathes], 1, 5)
 wathes = np.reshape(wathes, (len(wathes),4800))
 print(wathes.shape)
 result = vae.predict(wathes)
 print(result.shape)
 result = np.reshape(result, (len(result), 80, 60, 1))
 print(result.shape)
-ploters.plot_generated_images(result, 1, 5)
+ploters.plot_generated_images([result], 1, 5)
 
-
-# %%
-ploters.plot_history(history_train_metrics, metric='accuracy')
 
 # %%
 encoder_input_size = vae_decoder.layers[0].input_shape[0][1]
-arr = []
-for img in range(10):
-    randoms = []
-    for i in range(encoder_input_size):
-        randoms.append(random.normalvariate(0,1))
-    arr.append(randoms)
-random_sample = np.array(arr)
-print(random_sample.shape)
-# print('Random sample: ',random_sample)
-decoded_x = vae_decoder.predict(random_sample,verbose=0)
-generated = decoded_x.reshape(len(decoded_x), 80, 60, 1)
-ploters.plot_generated_images(generated, 1, 5)
-
-# %%
 num_images = 20
 images_in_cols = 5
 rows = math.ceil(num_images/images_in_cols)
@@ -192,4 +165,23 @@ for row in range(rows):
 
 ploters.plot_generated_images(generated_images,rows,images_in_cols)
 
-# %%
+# %% Works Only for 2D latent space
+n = 15 # number of images per row and column
+limit=3 # random values are sampled from the range [-limit,+limit]
+
+grid_x = np.linspace(-limit,limit, n) 
+grid_y = np.linspace(limit,-limit, n)
+
+generated_images=[]
+for i, yi in enumerate(grid_y):
+  single_row_generated_images=[]
+  for j, xi in enumerate(grid_x):
+    random_sample = np.array([[ xi, yi]])
+    decoded_x = vae_decoder.predict(random_sample,verbose=0)
+    single_row_generated_images.append(decoded_x[0].reshape(80, 60, 1))
+  generated_images.append(single_row_generated_images)      
+
+ploters.plot_generated_images(generated_images,n,n,True)
+
+# %% Not work
+ploters.plot_history(history_train_metrics, metric='accuracy')

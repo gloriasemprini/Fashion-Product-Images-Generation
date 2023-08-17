@@ -28,7 +28,7 @@ def plotGeneratedImages(generator):
     it = generator.next()
     images = it[0]
     print(images[1].shape)
-    ploters.plot_generated_images(images, 1, 5)
+    ploters.plot_generated_images([images], 1, 5)
 
     print("Images shape (numImages, high, width, numColors):")
     print(images.shape)
