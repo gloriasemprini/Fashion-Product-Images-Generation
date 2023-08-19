@@ -66,7 +66,7 @@ class Vae:
       return vae,encoder,decoder
 
   def getVAE(self, shape):
-    vae, vae_encoder, vae_decoder=self.build_vae(shape, [512, 128, 64], 16,'relu','sigmoid')
+    vae, vae_encoder, vae_decoder=self.build_vae(shape, [1024, 512, 128], 32,'relu','sigmoid')
     vae.summary()
     return vae, vae_encoder, vae_decoder
 

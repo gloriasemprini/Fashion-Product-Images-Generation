@@ -4,23 +4,36 @@ import importlib
 
 importlib.reload(ploters)
 
-def createImageGenerator(data_dir, batch_size=512):
+def createImageGenerator(data_dir, batch_size=2033):
 
     datagen = ImageDataGenerator(
         rescale=1.0 / 255.0,  # Scale pixel values between 0 and 1
-        rotation_range=1,
+        rotation_range=15,
+        validation_split=0.2
         # brightness_range=[0.5, 0.5]
     ) 
 
-    image_generator = datagen.flow_from_directory(
+    train_data_generator = datagen.flow_from_directory(
         data_dir,
         color_mode="grayscale",
         target_size=(80, 60),  # Set your desired image dimensions
         batch_size=batch_size,
         class_mode='input',  # No class labels, unsupervised learning
-        shuffle=True  # Shuffle the data
+        shuffle=True, # Shuffle the data
+        subset='training'
     )
-    return image_generator
+
+    validation_data_generator = datagen.flow_from_directory(
+        data_dir,
+        color_mode="grayscale",
+        target_size=(80, 60),  # Set your desired image dimensions
+        batch_size=batch_size,
+        class_mode='input',  # No class labels, unsupervised learning
+        shuffle=True,  # Shuffle the data
+        subset='validation'
+    )
+
+    return train_data_generator, validation_data_generator
 
     
 def plotGeneratedImages(generator):

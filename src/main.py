@@ -11,6 +11,8 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import confusion_matrix
 
+from keras.applications.inception_v3 import InceptionV3
+
 from PIL import Image
 
 import importlib
@@ -75,8 +77,9 @@ Image.open(str(l[0]))
 
 # %% Generator
 importlib.reload(im_gen)
-generator = im_gen.createImageGenerator(paths.BW_IMG_FOLDER)
-im_gen.plotGeneratedImages(generator)
+
+train_data_generator, validation_data_generator = im_gen.createImageGenerator(paths.BW_IMG_FOLDER)
+im_gen.plotGeneratedImages(train_data_generator)
 
 
 # %% VAE
@@ -86,7 +89,6 @@ importlib.reload(v2)
 vae, vae_encoder, vae_decoder = v2.FlatVAE().getVAE(4800)
 v1.plotVAE(vae)
 
-# %%
 kl_coefficient=1
 
 #Information needed to compute the loss function
@@ -98,6 +100,9 @@ log_var=vae.get_layer('log_var').output
 vae.add_loss(v1.vae_loss(vae_input,vae_output,mu,log_var,kl_coefficient,4800))
 vae.compile(optimizer='adam')
 
+
+loss_metrics=[]
+val_metrics=[]
 # %% This code do not work
 epoch_count = 100
 # batch_size=100
@@ -108,46 +113,50 @@ early_stop = keras.callbacks.EarlyStopping(monitor='val_loss', patience=patience
 history = vae.fit(generator,epochs=epoch_count,callbacks=[early_stop])
 
 
-# %%
+# %% =============TRAINING====================
 epochs = 50
-batch_size = 8
+batch_size = 16
 
-history_train_metrics=[]
 for epoch in range(epochs):
     
-    batch_x = next(generator)  # Assuming the generator yields (batch_x, batch_y)
-    
+    train_x, tain_label_y = next(train_data_generator)  # Assuming the generator yields (batch_x, label_y)
+    validation_x, validation_label_y = next(validation_data_generator)  # Assuming the generator yields (batch_x, label_y)
+        
+    wathes = np.reshape(train_x, (len(train_x),4800))
+    watches_val = np.reshape(validation_x, (len(validation_x),4800))
 
-    wathes = batch_x[0]
-    wathes = np.reshape(wathes, (len(wathes),4800))
-    history = vae.fit(wathes, wathes, batch_size=batch_size, verbose=0)
-    history_train_metrics.append(history)
-    train_metrics = vae.evaluate(wathes, wathes, verbose = 0)
-    print(f"Epoch {epoch+1}/{epochs} and {train_metrics}")
-    # print('\tTRAIN', end = '')
-    # for i in range(len(vae.metrics_names)):
-    #   print(' {}={:.4f}'.format(vae.metrics_names[i],train_metrics[i]), end = '')
-    # print()
+    history = vae.fit(
+        wathes, 
+        y=wathes, 
+        validation_data=(watches_val, watches_val), 
+        batch_size=batch_size, 
+        verbose=0)
+   
+    loss = history.history["loss"][0]
+    val_loss = history.history["val_loss"][0]
+    loss_metrics.append(loss)
+    val_metrics.append(val_loss)
+    print(f"Epoch {epoch+1}/{epochs} | loss: {loss} | val: {val_loss}")
 print("end")
 
 
-batch_x = next(generator)
-wathes = batch_x[0][:5]
+train_x = next(validation_data_generator)
+wathes = train_x[0][:5]
 print(wathes.shape)
 ploters.plot_generated_images([wathes], 1, 5)
 wathes = np.reshape(wathes, (len(wathes),4800))
-print(wathes.shape)
 result = vae.predict(wathes)
-print(result.shape)
 result = np.reshape(result, (len(result), 80, 60, 1))
-print(result.shape)
 ploters.plot_generated_images([result], 1, 5)
 
+history.history["loss"] = loss_metrics
+history.history["val_loss"] = val_metrics
+ploters.plot_history(history)
 
 # %%
 encoder_input_size = vae_decoder.layers[0].input_shape[0][1]
 num_images = 20
-images_in_cols = 5
+images_in_cols = 6
 rows = math.ceil(num_images/images_in_cols)
 
 generated_images=[]
@@ -164,6 +173,8 @@ for row in range(rows):
     generated_images.append(generated)      
 
 ploters.plot_generated_images(generated_images,rows,images_in_cols)
+
+
 
 # %% Works Only for 2D latent space
 n = 15 # number of images per row and column
@@ -183,5 +194,4 @@ for i, yi in enumerate(grid_y):
 
 ploters.plot_generated_images(generated_images,n,n,True)
 
-# %% Not work
-ploters.plot_history(history_train_metrics, metric='accuracy')
+
