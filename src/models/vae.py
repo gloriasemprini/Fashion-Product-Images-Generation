@@ -1,3 +1,4 @@
+import numpy as np
 from tensorflow import keras
 from keras import layers
 from keras import backend as K
@@ -10,7 +11,7 @@ class Vae:
       epsilon = K.random_normal(shape=(batch_size, dim), mean=0., stddev=1.0)
       return K.exp(0.5 * log_var) * epsilon + mu
 
-  def build_vae(self, input_count,neuron_count_per_hidden_layer,encoded_dim,hidden_activation,output_activation):
+  def build_vae(self, shape, input_count, neuron_count_per_hidden_layer,encoded_dim,hidden_activation,output_activation):
       #Encoder
       encoder_input = layers.Input(shape=input_count, name='encoder_input')
       encoder_input2 = layers.Reshape((80,60,1), input_shape=(4800,), name='encoder_input_reshaped')(encoder_input)
@@ -65,8 +66,8 @@ class Vae:
       
       return vae,encoder,decoder
 
-  def getVAE(self, shape):
-    vae, vae_encoder, vae_decoder=self.build_vae(shape, [1024, 512, 128], 32,'relu','sigmoid')
+  def getVAE(self, shape, count):
+    vae, vae_encoder, vae_decoder=self.build_vae(shape, count, [1024, 512, 128], 32,'relu','sigmoid')
     vae.summary()
     return vae, vae_encoder, vae_decoder
 
@@ -75,7 +76,10 @@ def plotVAE(vae):
 
 def vae_loss(vae_input,vae_ouput,mu,log_var,kl_coefficient, input_count):
   #Reconstruction loss
-  reconstruction_loss = keras.losses.mean_squared_error(vae_input,vae_ouput) * input_count
+  # reconstruction_loss = keras.losses.mean_squared_error(vae_input,vae_ouput) * input_count
+  x = keras.layers.Reshape((input_count,))(vae_input)
+  y = keras.layers.Reshape((input_count,))(vae_ouput)
+  reconstruction_loss = keras.losses.mean_squared_error(x, y) * input_count
 
   #Regularization loss
   kl_loss = 0.5 * K.sum(K.square(mu) + K.exp(log_var) - log_var - 1, axis = -1)
