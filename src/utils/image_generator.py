@@ -9,8 +9,10 @@ def createImageGenerator(data_dir, batch_size=64, imageSize = (80,60)):
 
     datagen = ImageDataGenerator(
         rescale=1.0 / 255.0,  # Scale pixel values between 0 and 1
-        rotation_range=15,
-        validation_split=0.2
+        # rotation_range=0,
+        validation_split=0.2,
+        # width_shift_range=0.1,
+        # height_shift_range=0.1,
         # brightness_range=[0.5, 0.5]
     ) 
 
