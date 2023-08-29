@@ -8,7 +8,9 @@ import time
 from sklearn.model_selection import train_test_split
 from tensorflow import keras
 from utils.gan_utils import chunks as chk
-import utils.ploters as ploters 
+import utils.ploters as ploters
+import utils.gan_utils as gu1
+
 
 class Gan:
   def build_gan(shape,neuron_count_per_hidden_layer,output_dim,hidden_activation,generator_output_activation):
@@ -62,7 +64,7 @@ class Gan:
         avg_g_loss=0
 
         # Training indices are shuffled and grouped into batches
-        batch_indices=get_random_batch_indices(train_data_count,batch_size)
+        batch_indices=gu1.get_random_batch_indices(train_data_count,batch_size)
 
         for i in range(iteration_count):
             current_batch_size=len(batch_indices[i])
