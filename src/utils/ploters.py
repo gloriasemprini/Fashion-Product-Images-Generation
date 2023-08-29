@@ -95,3 +95,21 @@ def plot_generated_images(generated_images, nrows, ncols,no_space_between_plots=
     plt.subplots_adjust(wspace=0,hspace=0)
 
   plt.show()
+
+def plot_gan_losses(d_losses,g_losses):
+  fig, ax1 = plt.subplots(figsize=(10, 8))
+
+  epoch_count=len(d_losses)
+
+  line1,=ax1.plot(range(1,epoch_count+1),d_losses,label='discriminator_loss',color='orange')
+  ax1.set_ylim([0, max(d_losses)])
+  ax1.tick_params(axis='y', labelcolor=line1.get_color())
+  _=ax1.legend(loc='lower left')
+
+  ax2 = ax1.twinx()
+  line2,=ax2.plot(range(1,epoch_count+1),g_losses,label='generator_loss')
+  ax2.set_xlim([1,epoch_count])
+  ax2.set_ylim([0, max(g_losses)])
+  ax2.set_xlabel('Epochs')
+  ax2.tick_params(axis='y', labelcolor=line2.get_color())
+  _=ax2.legend(loc='upper right')
