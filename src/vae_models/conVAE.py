@@ -1,6 +1,6 @@
 from tensorflow import keras
 from keras import layers
-import models.vae as vae
+import vae_models.vae as vae
 from keras import backend as K
 
 class ConvVae(vae.Vae):
@@ -9,7 +9,7 @@ class ConvVae(vae.Vae):
         #Encoder
         encoder_input = layers.Input(shape=myshape, name='encoder_input')
         prev_layer = encoder_input
-        channels = 8
+        channels = 16
         prev_layer = self.create_conv_block(prev_layer, channels, 4)
         for i in range(4):
             channels *= 2 
@@ -48,7 +48,7 @@ class ConvVae(vae.Vae):
         for i in range(4):
             channels //= 2 
             prev_layer = self.create_upsampling_conv_block(prev_layer, channels)
-        prev_layer = layers.Conv2D(1, 4, padding="same", use_bias=False)(prev_layer)
+        prev_layer = layers.Conv2D(3, 4, padding="same", use_bias=False)(prev_layer)
         # prev_layer =layers.BatchNormalization()(prev_layer)
         decoder_output_layer = layers.Activation('sigmoid', name='rec_image')(prev_layer)
         # prev_layer = layers.Conv2DTranspose(32, (3, 3), strides=1, padding="same", activation=hidden_activation)(prev_layer)

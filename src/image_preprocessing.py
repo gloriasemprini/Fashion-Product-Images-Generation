@@ -34,8 +34,11 @@ ploters.plotImagesById(selected_image_ids)
 
 # %% Plot only random whatches
 importlib.reload(filters)
-watches_df = filters.getWatches(df)
-ploters.plotRandomImg(watches_df)
+watches_df = filters.get_dataframe_by_article_type(df, "Watches")
+sunglasses_df = filters.get_dataframe_by_article_type(df, "Sunglasses")
+# %%
+kurtas_df = filters.get_dataframe_by_article_type(df, "Kurtas")
+ploters.plotRandomImg(kurtas_df)
 
 
 # %% WARNING: this code create a new folder with only grayscale watches
@@ -47,8 +50,10 @@ ploters.plotRandomImg(watches_df, path=paths.BW_IMG_FOLDER_INNER)
 # %% WARNING 2
 importlib.reload(ploters)
 importlib.reload(bw)
-bw.savaWithColors(watches_df['id'], "color/")
-ploters.plotRandomImg(watches_df, path=paths.COLOR_IMG_FOLDER + "color/")
+bw.saveWithColors(watches_df['id'], "watches/")
+ploters.plotRandomImg(watches_df, path=paths.COLOR_IMG_FOLDER + "watches/")
+bw.saveWithColors(sunglasses_df['id'], "sunglasses/")
+ploters.plotRandomImg(sunglasses_df, path=paths.COLOR_IMG_FOLDER + "sunglasses/")
 
 
 # %% Show first image of a directory

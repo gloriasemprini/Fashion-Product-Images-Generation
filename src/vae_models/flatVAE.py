@@ -1,6 +1,6 @@
 from tensorflow import keras
 from keras import layers
-import models.vae as vae
+import vae_models.vae as vae
 
 class FlatVAE(vae.Vae):
     def build_vae(self, shape, input_count, neuron_count_per_hidden_layer,encoded_dim,hidden_activation,output_activation):

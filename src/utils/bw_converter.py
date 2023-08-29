@@ -23,7 +23,7 @@ def convert_to_bw(ids):
         bw_image.save(output_path)
 
 
-def savaWithColors(ids, subfolder_name):
+def saveWithColors(ids, subfolder_name):
     if not os.path.exists(paths.COLOR_IMG_FOLDER):
         os.makedirs(paths.COLOR_IMG_FOLDER)
 
