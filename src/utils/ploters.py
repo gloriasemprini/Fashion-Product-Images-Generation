@@ -8,6 +8,13 @@ import utils.paths as paths
 
 
 def plotRandomImg(df, num=15, path=paths.IMG_FOLDER):
+  """ plot random 15 images from dataframe
+
+  Args:
+      df (dataframe): pandas dataframe
+      num (int, optional): number of images. Defaults to 15.
+      path (string, optional): path to the folder with images. Defaults to paths.IMG_FOLDER.
+  """
   ids = df['id']
   selected_image_ids = random.sample(ids.tolist(), num)
   plotImagesById(selected_image_ids, path)
@@ -31,6 +38,24 @@ def plotImagesById(ids, folder=paths.IMG_FOLDER):
 
     plt.tight_layout()
     plt.show()
+
+def plot_2d_latent_space(decoder, image_shape):
+  n = 12 # number of images per row and column
+  limit=3 # random values are sampled from the range [-limit,+limit]
+
+  grid_x = np.linspace(-limit,limit, n) 
+  grid_y = np.linspace(limit,-limit, n)
+
+  generated_images=[]
+  for i, yi in enumerate(grid_y):
+    single_row_generated_images=[]
+    for j, xi in enumerate(grid_x):
+      random_sample = np.array([[ xi, yi]])
+      decoded_x = decoder.predict(random_sample,verbose=0)
+      single_row_generated_images.append(decoded_x[0])
+    generated_images.append(single_row_generated_images)      
+
+  plot_generated_images(generated_images,n,n,True)
 
 
 

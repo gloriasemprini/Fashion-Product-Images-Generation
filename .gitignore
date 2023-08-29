@@ -1,6 +1,6 @@
 ##### Custom
-dataset/images/
-dataset/bw/
+dataset/*
+!dataset/styles.csv
 
 src/model.png
 

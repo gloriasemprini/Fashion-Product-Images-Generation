@@ -1,22 +1,29 @@
 from keras.preprocessing.image import ImageDataGenerator
 import utils.ploters as ploters 
 import importlib
+import numpy as np
+import random
 
 importlib.reload(ploters)
 
-def createImageGenerator(data_dir, batch_size=64, imageSize = (80,60)):
-    
+def createImageGenerator(data_dir, batch_size=64, imageSize = (80,60), rgb=False):
+    color_mode = "grayscale" 
+    if (rgb):
+        color_mode = "rgb"
 
     datagen = ImageDataGenerator(
         rescale=1.0 / 255.0,  # Scale pixel values between 0 and 1
-        rotation_range=15,
-        validation_split=0.2
+        # rotation_range=0,
+        validation_split=0.2,
+        # width_shift_range=0.1,
+        # height_shift_range=0.1,
         # brightness_range=[0.5, 0.5]
     ) 
 
+
     train_data_generator = datagen.flow_from_directory(
         data_dir,
-        color_mode="grayscale",
+        color_mode=color_mode,
         target_size=imageSize,
         batch_size=batch_size,
         class_mode=None,#'input',  # No class labels, unsupervised learning
@@ -26,7 +33,7 @@ def createImageGenerator(data_dir, batch_size=64, imageSize = (80,60)):
 
     validation_data_generator = datagen.flow_from_directory(
         data_dir,
-        color_mode="grayscale",
+        color_mode=color_mode,
         target_size=imageSize,
         batch_size=batch_size,
         class_mode=None,#'input',  # No class labels, unsupervised learning
@@ -48,3 +55,24 @@ def plotGeneratedImages(generator):
     print(images.shape)
     # train_x_flatten=np.reshape(images,(images.shape[0],-1))
     # print(train_x_flatten.shape)
+
+
+class DecoderImageGenerator:
+    def __init__(self, model, batch_size):
+        self.model = model
+        self.batch_size = batch_size
+        self.encoder_input_size = model.layers[0].input_shape[0][1]
+
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        inputs = []
+        for k in range(self.batch_size):
+            random_sample = []
+            for i in range(self.encoder_input_size):
+                random_sample.append(random.normalvariate(0,1))
+            inputs.append(random_sample)
+        generated_images = self.model.predict(np.array(inputs),verbose=0)
+        
+        return generated_images

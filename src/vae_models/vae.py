@@ -42,12 +42,10 @@ class Vae:
         hidden_layer=layers.Dense(neuron_count,activation=hidden_activation)(prev_layer)
         prev_layer=hidden_layer
       
-      prev_layer = layers.Dense(1680,activation=hidden_activation)(prev_layer)
-      prev_layer = layers.Reshape((10, 7, 24))(prev_layer)
-      prev_layer = layers.Conv2DTranspose(24, (3, 3), strides=1, padding="same", activation=hidden_activation)(prev_layer)
+      prev_layer = layers.Dense(2240,activation=hidden_activation)(prev_layer)
+      prev_layer = layers.Reshape((10, 7, 32))(prev_layer)
+      prev_layer = layers.Conv2DTranspose(32, (3, 3), strides=1, padding="same", activation=hidden_activation)(prev_layer)
       prev_layer = layers.Conv2DTranspose(16, (4, 4), strides=2, padding="same", activation=hidden_activation)(prev_layer)
-      # prev_layer = layers.Conv2D(32, (40,30))(prev_layer)
-      # prev_layer = layers.Conv2D(1, (80, 60), padding="same")(prev_layer)
       prev_layer = layers.Flatten()(prev_layer)
 
       decoder_output_layer=layers.Dense(input_count,activation=output_activation, name='decoder_output')(prev_layer)
@@ -65,11 +63,6 @@ class Vae:
       vae=keras.Model(encoder.input, decoder(s),name='vae')
       
       return vae,encoder,decoder
-
-  def getVAE(self, shape, count):
-    vae, vae_encoder, vae_decoder=self.build_vae(shape, count, [1024, 512, 128], 32,'relu','sigmoid')
-    vae.summary()
-    return vae, vae_encoder, vae_decoder
 
 def plotVAE(vae):
   keras.utils.plot_model(vae, show_shapes=True, show_layer_names=True, expand_nested=True)
