@@ -8,7 +8,9 @@ import time
 from sklearn.model_selection import train_test_split
 from tensorflow import keras
 from utils.gan_utils import chunks as chk
-import utils.ploters as ploters 
+import utils.ploters as ploters
+import utils.gan_utils as gu1
+
 
 class Gan:
   def build_gan(shape,neuron_count_per_hidden_layer,output_dim,hidden_activation,generator_output_activation):
@@ -19,6 +21,7 @@ class Gan:
       generator.add(layers.Dense(neuron_count, activation=hidden_activation))
     
     generator.add(layers.Dense(output_dim, activation=generator_output_activation,name='generator_output'))
+    
     #Discriminator
     discriminator = keras.Sequential(name='discriminator')
     discriminator.add(layers.Input(shape=output_dim,name='discriminator_input'))
@@ -30,11 +33,6 @@ class Gan:
     #GAN
     gan = keras.Model(generator.input, discriminator(generator.output),name='gan')
     return gan,generator,discriminator
-
-  def getGAN(self, shape, count):
-    gan, gan_generator, gan_discriminator=self.build_gan(shape, count, [1024, 512, 128], 32,'relu','sigmoid')
-    gan.summary()
-    return gan, gan_generator, gan_discriminator
   
   def train_gan(gan,generator,discriminator,train_x,train_data_count,input_noise_dim,epoch_count, batch_size,
               get_random_input_func,get_real_batch_func,get_fake_batch_func,concatenate_batches_func,condition_count=-1,
@@ -62,7 +60,7 @@ class Gan:
         avg_g_loss=0
 
         # Training indices are shuffled and grouped into batches
-        batch_indices=get_random_batch_indices(train_data_count,batch_size)
+        batch_indices=gu1.get_random_batch_indices(train_data_count,batch_size)
 
         for i in range(iteration_count):
             current_batch_size=len(batch_indices[i])

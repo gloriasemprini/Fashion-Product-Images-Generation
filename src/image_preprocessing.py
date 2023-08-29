@@ -35,7 +35,7 @@ ploters.plotImagesById(selected_image_ids)
 # %% Plot only random whatches
 importlib.reload(filters)
 watches_df = filters.get_dataframe_by_article_type(df, "Watches")
-sunglasses_df = filters.get_dataframe_by_article_type(df, "Sunglasses")
+#sunglasses_df = filters.get_dataframe_by_article_type(df, "Sunglasses")
 # %%
 kurtas_df = filters.get_dataframe_by_article_type(df, "Kurtas")
 ploters.plotRandomImg(kurtas_df)
@@ -52,8 +52,8 @@ importlib.reload(ploters)
 importlib.reload(bw)
 bw.saveWithColors(watches_df['id'], "watches/")
 ploters.plotRandomImg(watches_df, path=paths.COLOR_IMG_FOLDER + "watches/")
-bw.saveWithColors(sunglasses_df['id'], "sunglasses/")
-ploters.plotRandomImg(sunglasses_df, path=paths.COLOR_IMG_FOLDER + "sunglasses/")
+#bw.saveWithColors(sunglasses_df['id'], "sunglasses/")
+#ploters.plotRandomImg(sunglasses_df, path=paths.COLOR_IMG_FOLDER + "sunglasses/")
 
 
 # %% Show first image of a directory

@@ -19,7 +19,6 @@ import vae_models.conVAE as conv_vae
 
 import utils.image_generator as im_gen
 
-
 # %%
 importlib.reload(v1)
 importlib.reload(im_gen)
