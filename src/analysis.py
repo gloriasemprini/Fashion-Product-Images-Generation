@@ -17,3 +17,12 @@ def showDatasetDetails(df):
 
     print("\nMissing Values:")
     print(df.isnull().sum())
+
+
+def unique_values_for_each_column(df):
+    columns = df.columns.tolist()
+    columns.remove("id")
+    columns.remove("productDisplayName")
+    for col in columns:
+        print(df[col].value_counts())
+        print("------------------------------")
