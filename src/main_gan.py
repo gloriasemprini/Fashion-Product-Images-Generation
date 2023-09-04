@@ -30,7 +30,7 @@ importlib.reload(g1)
 importlib.reload(cg1)
 importlib.reload(g_ut)
 # %% Generator
-importlib.reload(im_gen)
+importlib.reload(img_gen)
 image_heigh = 64
 image_weigh = 64
 
