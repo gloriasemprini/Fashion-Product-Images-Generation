@@ -16,11 +16,15 @@ class cConvVae(convVae.ConvVae):
 
         prev_layer = concatedated
         channels = 16
-        prev_layer = self.create_conv_block(prev_layer, channels, 4)
-        for i in range(3):
+        prev_layer = self.create_conv_block(prev_layer, channels, hidden_activation, 4)
+        num_downsampling = 4
+        for i in range(num_downsampling):
             channels *= 2 
-            prev_layer = self.create_downsampling_conv_block(prev_layer, channels)
+            prev_layer = self.create_downsampling_conv_block(prev_layer, channels, hidden_activation)
         
+        channels = channels/2
+        prev_layer = self.create_conv_block(prev_layer, channels,hidden_activation, 4)
+
         last_conv_shape = K.int_shape(prev_layer)
 
         prev_layer = layers.Flatten(name="Flatten")(prev_layer)
@@ -49,14 +53,15 @@ class cConvVae(convVae.ConvVae):
         prev_layer = layers.Reshape((last_conv_shape[1],last_conv_shape[2], last_conv_shape[3]))(prev_layer)
         channels = last_conv_shape[3]
 
+        channels = channels*2
+        prev_layer = self.create_conv_block(prev_layer, channels,hidden_activation, 4)
 
-        for i in range(3):
+
+        for i in range(num_downsampling):
             channels //= 2 
-            prev_layer = self.create_upsampling_conv_block(prev_layer, channels)
+            prev_layer = self.create_upsampling_conv_block(prev_layer, channels, hidden_activation)
 
-        prev_layer = layers.Conv2D(shape[2], 4, padding="same", use_bias=False)(prev_layer)
-        # prev_layer =layers.BatchNormalization()(prev_layer)
-        decoder_output_layer = layers.Activation(output_activation, name='rec_image')(prev_layer)
+        decoder_output_layer = layers.Conv2D(shape[2], 4, padding="same", use_bias=False, activation=output_activation)(prev_layer)
 
 
         decoder = keras.Model([decoder_input, label_input], decoder_output_layer, name='decoder')

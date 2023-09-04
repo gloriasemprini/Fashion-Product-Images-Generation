@@ -3,13 +3,13 @@ import utils.ploters as ploters
 import importlib
 import numpy as np
 import random
+from keras.utils import to_categorical
+from sklearn.preprocessing import LabelEncoder
 
 importlib.reload(ploters)
 
 def createImageGenerator(data_dir, batch_size=64, imageSize = (80,60), rgb=False, class_mode=None):
-    color_mode = "grayscale" 
-    if (rgb):
-        color_mode = "rgb"
+    color_mode =  "rgb" if (rgb) else "grayscale" 
 
     datagen = ImageDataGenerator(
         rescale=1.0 / 255.0,  # Scale pixel values between 0 and 1
@@ -26,7 +26,7 @@ def createImageGenerator(data_dir, batch_size=64, imageSize = (80,60), rgb=False
         color_mode=color_mode,
         target_size=imageSize,
         batch_size=batch_size,
-        class_mode=class_mode,#'input', 'categorical' # No class labels, unsupervised learning
+        class_mode=class_mode,#'input', 'categorical' 
         shuffle=True, # Shuffle the data
         subset='training'
     )
@@ -36,17 +36,58 @@ def createImageGenerator(data_dir, batch_size=64, imageSize = (80,60), rgb=False
         color_mode=color_mode,
         target_size=imageSize,
         batch_size=batch_size,
-        class_mode=class_mode,#'input', 'categorical' # No class labels, unsupervised learning
+        class_mode=class_mode,#'input', 'categorical' 
         shuffle=True,  # Shuffle the data
         subset='validation'
     )
 
     return train_data_generator, validation_data_generator
 
+def create_image_generator_df(df, data_dir, batch_size=64, imageSize = (80,60), rgb=False, class_mode=None):
+    color_mode =  "rgb" if (rgb) else "grayscale" 
     
+    articleType_encoder = LabelEncoder()
+    color_encoder = LabelEncoder()
+    articleType_encoder.fit(df["articleType"].unique())
+    color_encoder.fit(df["baseColour"].unique())
+
+    datagen = ImageDataGenerator(
+        rescale=1.0 / 255.0,  # Scale pixel values between 0 and 1
+        validation_split=0.1,
+    ) 
+
+    train_data_generator = datagen.flow_from_dataframe(
+        df,
+        data_dir,
+        x_col="id",
+        y_col=["articleType", "baseColour"],
+        color_mode=color_mode,
+        target_size=imageSize,
+        batch_size=batch_size,
+        class_mode=class_mode,#'input', 'categorical' 
+        shuffle=True, 
+        subset='training'
+    )
+
+    validation_data_generator = datagen.flow_from_dataframe(
+        df,
+        data_dir,
+        x_col="id",
+        y_col=["articleType", "baseColour"],
+        color_mode=color_mode,
+        target_size=imageSize,
+        batch_size=batch_size,
+        class_mode=class_mode,#'input', 'categorical' 
+        shuffle=True,
+        subset='validation'
+    )
+    train_data_generator = MultilabelImageDataGenerator(train_data_generator, articleType_encoder, color_encoder)
+    validation_data_generator = MultilabelImageDataGenerator(validation_data_generator, articleType_encoder, color_encoder)
+    
+    return train_data_generator, validation_data_generator
 def plotGeneratedImages(generator):
   
-    it = generator.next()
+    it = next(generator)
     if(type(it) is tuple):
        images, labels = it
     else: 
@@ -105,3 +146,31 @@ class ConditionalImageGeneratorDecoder:
         generated_images = self.model.predict([np.array(inputs), np.array(self.labels)],verbose=0)
         
         return generated_images
+    
+class MultilabelImageDataGenerator:
+    def __init__(self, generator, articleType_encoder, color_encoder):
+        self.generator = generator
+        self.articleType_encoder = articleType_encoder
+        self.color_encoder = color_encoder
+        self.articl_n_classes =  len(articleType_encoder.classes_)
+        self.color_n_classes =  len(color_encoder.classes_)
+        self.num_classes = self.articl_n_classes + self.color_n_classes 
+        self.class_indicies = articleType_encoder.classes_
+
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        x, y = next(self.generator)
+        articleType_one_hot = to_categorical(self.articleType_encoder.transform(y[0]), num_classes=self.articl_n_classes)
+        color_one_hot = to_categorical(self.color_encoder.transform(y[1]), num_classes=self.color_n_classes)
+        concatenated = []
+        for i in range(len(articleType_one_hot)):
+            concatenated.append(articleType_one_hot[i].tolist() + color_one_hot[i].tolist())
+        
+        return x, np.array(concatenated, dtype=np.float32)
+    
+    def __len__(self):
+        return len(self.generator)
+
+    

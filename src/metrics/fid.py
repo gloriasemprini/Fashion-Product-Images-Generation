@@ -13,15 +13,18 @@ def getInceptionModel(image_shape):
 
 def compute_embeddings(dataloader, count, inception_model):
     image_embeddings = []
+    it = iter(dataloader)
     for _ in range(count):
-        images = next(iter(dataloader))
+        images = next(it)
+        if(type(images) is tuple):
+            images, labels = images
         embeddings = inception_model.predict(images)
         image_embeddings.extend(embeddings)
     return np.array(image_embeddings)
 
 
 def getFid(real_img_generator, fake_img_generator, image_shape ):
-    count = 50 # math.ceil(10000/BATCH_SIZE)
+    count = len(real_img_generator) - 1 
 
     inception_model = getInceptionModel(image_shape)
 
@@ -29,7 +32,7 @@ def getFid(real_img_generator, fake_img_generator, image_shape ):
     real_image_embeddings = compute_embeddings(real_img_generator, count, inception_model)
 
     # compute embeddings for generated images
-    generated_image_embeddings = compute_embeddings(iter(fake_img_generator), count, inception_model)
+    generated_image_embeddings = compute_embeddings(fake_img_generator, count, inception_model)
 
 
     print("Real embedding shape: " + str(real_image_embeddings.shape))

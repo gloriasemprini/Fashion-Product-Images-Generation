@@ -114,7 +114,7 @@ def plot_generated_images(generated_images, nrows, ncols,no_space_between_plots=
   for i in range(nrows):
     for j in range(ncols):
       axs[i,j].axis('off')
-      axs[i,j].imshow(generated_images[i][j], cmap='gray')
+      axs[i,j].imshow(generated_images[i][j])
 
   if no_space_between_plots:
     plt.subplots_adjust(wspace=0,hspace=0)
@@ -138,3 +138,33 @@ def plot_gan_losses(d_losses,g_losses):
   ax2.set_xlabel('Epochs')
   ax2.tick_params(axis='y', labelcolor=line2.get_color())
   _=ax2.legend(loc='upper right')
+
+
+def plot_model_input_and_output(generator, model, num=6):
+   # Trasform 5 random images from validation set
+   val_x, val_y = next(generator)
+   if (len(val_x) < num):
+      val_x, val_y = next(generator) # redo 
+
+   # get first 5 dataset images
+   real_imgs = val_x[:num] 
+   labels = val_y[:num]
+   plot_generated_images([real_imgs], 1, num)
+
+   generated_imgs = model.predict([real_imgs,labels], verbose=0)
+   plot_generated_images([generated_imgs], 1, num)
+
+
+def plot_losses_from_array(training_losses, validation_losses):
+  epochs = list(range(1, len(training_losses) + 1))
+
+  plt.plot(epochs, training_losses, label='Training Loss',  linestyle='-')
+
+  # Plot validation losses
+  plt.plot(epochs, validation_losses, label='Validation Loss', linestyle='-')
+
+  # Add labels and a legend
+  plt.xlabel('Epochs')
+  plt.ylabel('Loss')
+  plt.title('Training and Validation Loss Over Epochs')
+  plt.legend()
