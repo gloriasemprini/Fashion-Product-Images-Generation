@@ -1,6 +1,7 @@
 ##### Custom
 dataset/*
 !dataset/styles.csv
+weights/*
 
 src/model.png
 
