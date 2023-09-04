@@ -11,7 +11,7 @@ class Vae:
       epsilon = K.random_normal(shape=(batch_size, dim), mean=0., stddev=1.0)
       return K.exp(0.5 * log_var) * epsilon + mu
 
-  def build_vae(self, shape, input_count, neuron_count_per_hidden_layer,encoded_dim,hidden_activation,output_activation):
+  def build_vae(self, shape, input_count, neuron_count_per_hidden_layer,encoded_dim,hidden_activation,output_activation, num_classes=None):
       #Encoder
       encoder_input = layers.Input(shape=input_count, name='encoder_input')
       encoder_input2 = layers.Reshape((80,60,1), input_shape=(4800,), name='encoder_input_reshaped')(encoder_input)
@@ -70,6 +70,7 @@ def plotVAE(vae):
 def vae_loss(vae_input,vae_ouput,mu,log_var,kl_coefficient, input_count):
   #Reconstruction loss
   # reconstruction_loss = keras.losses.mean_squared_error(vae_input,vae_ouput) * input_count
+  vae_input = vae_input[0] if(type(vae_input) is list) else vae_input
   x = keras.layers.Reshape((input_count,))(vae_input)
   y = keras.layers.Reshape((input_count,))(vae_ouput)
   reconstruction_loss = keras.losses.mean_squared_error(x, y) * input_count

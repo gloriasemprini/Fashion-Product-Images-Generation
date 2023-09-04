@@ -4,7 +4,7 @@ import vae_models.vae as vae
 from keras import backend as K
 
 class ConvVae(vae.Vae):
-    def build_vae(self, shape, input_count, neuron_count_per_hidden_layer,encoded_dim,hidden_activation,output_activation):
+    def build_vae(self, shape, input_count, neuron_count_per_hidden_layer,encoded_dim,hidden_activation,output_activation, num_classes=None):
         myshape = shape
         #Encoder
         encoder_input = layers.Input(shape=myshape, name='encoder_input')
@@ -50,7 +50,7 @@ class ConvVae(vae.Vae):
             prev_layer = self.create_upsampling_conv_block(prev_layer, channels)
         prev_layer = layers.Conv2D(3, 4, padding="same", use_bias=False)(prev_layer)
         # prev_layer =layers.BatchNormalization()(prev_layer)
-        decoder_output_layer = layers.Activation('sigmoid', name='rec_image')(prev_layer)
+        decoder_output_layer = layers.Activation(output_activation, name='rec_image')(prev_layer)
         # prev_layer = layers.Conv2DTranspose(32, (3, 3), strides=1, padding="same", activation=hidden_activation)(prev_layer)
         # prev_layer = layers.Conv2DTranspose(16, (4, 4), strides=2, padding="same", activation=hidden_activation)(prev_layer)
   
@@ -70,19 +70,19 @@ class ConvVae(vae.Vae):
     
     def create_conv_block(self, prev_layer, channels, kernel_size=3, padding='same'):
         prev_layer = layers.Conv2D(channels, kernel_size, padding=padding, use_bias=False)(prev_layer)
-        # prev_layer = layers.BatchNormalization()(prev_layer)
+        prev_layer = layers.BatchNormalization()(prev_layer)
         prev_layer = layers.LeakyReLU()(prev_layer) 
         return prev_layer
 
     def create_downsampling_conv_block(self, prev_layer, channels, kernel_size=4):
         prev_layer = layers.ZeroPadding2D()(prev_layer)
         prev_layer = layers.Conv2D(channels, kernel_size, strides=(2, 2), use_bias=False)(prev_layer)
-        # prev_layer = layers.BatchNormalization()(prev_layer)
+        prev_layer = layers.BatchNormalization()(prev_layer)
         prev_layer = layers.LeakyReLU()(prev_layer) 
         return prev_layer
 
     def create_upsampling_conv_block(self, prev_layer, channels, kernel_size = 3):
         # prev_layer = layers.UpSampling2D()(prev_layer)
-        prev_layer = layers.Conv2DTranspose(channels, kernel_size,strides=2, padding="same")(prev_layer)
+        prev_layer = layers.Conv2DTranspose(channels, kernel_size,strides=2, padding="same", activation="LeakyReLU")(prev_layer)
         # prev_layer = self.create_conv_block(prev_layer, channels, kernel_size = kernel_size)
         return prev_layer

@@ -6,15 +6,15 @@ import random
 
 importlib.reload(ploters)
 
-def createImageGenerator(data_dir, batch_size=64, imageSize = (80,60), rgb=False):
+def createImageGenerator(data_dir, batch_size=64, imageSize = (80,60), rgb=False, class_mode=None):
     color_mode = "grayscale" 
     if (rgb):
         color_mode = "rgb"
 
     datagen = ImageDataGenerator(
         rescale=1.0 / 255.0,  # Scale pixel values between 0 and 1
-        # rotation_range=0,
-        validation_split=0.2,
+        # rotation_range=10,
+        validation_split=0.1,
         # width_shift_range=0.1,
         # height_shift_range=0.1,
         # brightness_range=[0.5, 0.5]
@@ -26,7 +26,7 @@ def createImageGenerator(data_dir, batch_size=64, imageSize = (80,60), rgb=False
         color_mode=color_mode,
         target_size=imageSize,
         batch_size=batch_size,
-        class_mode=None,#'input',  # No class labels, unsupervised learning
+        class_mode=class_mode,#'input', 'categorical' # No class labels, unsupervised learning
         shuffle=True, # Shuffle the data
         subset='training'
     )
@@ -36,7 +36,7 @@ def createImageGenerator(data_dir, batch_size=64, imageSize = (80,60), rgb=False
         color_mode=color_mode,
         target_size=imageSize,
         batch_size=batch_size,
-        class_mode=None,#'input',  # No class labels, unsupervised learning
+        class_mode=class_mode,#'input', 'categorical' # No class labels, unsupervised learning
         shuffle=True,  # Shuffle the data
         subset='validation'
     )
@@ -47,8 +47,13 @@ def createImageGenerator(data_dir, batch_size=64, imageSize = (80,60), rgb=False
 def plotGeneratedImages(generator):
   
     it = generator.next()
-    images = it #it[0]
-    print(images[1].shape)
+    if(type(it) is tuple):
+       images, labels = it
+    else: 
+        images = it #it[0]
+
+ 
+    print("An image shape: ", images[1].shape)
     ploters.plot_generated_images([images], 1, 5)
 
     print("Images shape (numImages, high, width, numColors):")
@@ -57,7 +62,7 @@ def plotGeneratedImages(generator):
     # print(train_x_flatten.shape)
 
 
-class DecoderImageGenerator:
+class ImageGeneratorDecoder:
     def __init__(self, model, batch_size):
         self.model = model
         self.batch_size = batch_size
@@ -74,5 +79,29 @@ class DecoderImageGenerator:
                 random_sample.append(random.normalvariate(0,1))
             inputs.append(random_sample)
         generated_images = self.model.predict(np.array(inputs),verbose=0)
+        
+        return generated_images
+    
+
+    
+
+class ConditionalImageGeneratorDecoder:
+    def __init__(self, model, batch_size, label):
+        self.model = model
+        self.batch_size = batch_size
+        self.encoder_input_size = model.layers[0].input_shape[0][1]
+        self.labels = [label for _ in range(batch_size)]
+
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        inputs = []
+        for k in range(self.batch_size):
+            random_sample = []
+            for i in range(self.encoder_input_size):
+                random_sample.append(random.normalvariate(0,1))
+            inputs.append(random_sample)
+        generated_images = self.model.predict([np.array(inputs), np.array(self.labels)],verbose=0)
         
         return generated_images

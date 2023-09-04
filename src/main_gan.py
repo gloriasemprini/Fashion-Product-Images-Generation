@@ -16,14 +16,14 @@ import utils.paths as paths
 import utils.callbacks as callbacks
 import utils.ploters as ploters 
 
-import utils.image_generator as im_gen
+import utils.image_generator as img_gen
 
 import gan.gan as g1
 import gan.cgan as cg1
 import utils.gan_utils as g_ut
 
 # %%
-importlib.reload(im_gen)
+importlib.reload(img_gen)
 importlib.reload(paths)
 importlib.reload(ploters)
 importlib.reload(g1)
@@ -33,11 +33,12 @@ importlib.reload(g_ut)
 importlib.reload(im_gen)
 image_heigh = 64
 image_weigh = 64
+
 NUM_COLORS = 1
 BATCH_SIZE = 64
 imageSize = (image_heigh, image_weigh)
 
-train_generator, validation_generator = im_gen.createImageGenerator(
+train_generator, validation_generator = img_gen.createImageGenerator(
    # paths.BW_IMG_FOLDER, 
    paths.COLOR_IMG_FOLDER,
    imageSize=imageSize,
@@ -46,7 +47,7 @@ train_generator, validation_generator = im_gen.createImageGenerator(
 #train_generator, validation_generator = im_gen.createImageGenerator(paths.COLOR_IMG_FOLDER, imageSize=imageSize)
 
 
-im_gen.plotGeneratedImages(train_generator)
+img_gen.plotGeneratedImages(train_generator)
 
 # %% GAN - Model creation
 importlib.reload(g1)
