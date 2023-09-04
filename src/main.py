@@ -37,8 +37,8 @@ importlib.reload(preprocess)
 def append_ext(id):
     return id+".jpg"
 
-image_heigh = 80
-image_weigh = 80
+image_heigh = 64
+image_weigh = 64
 NUM_COLORS = 3
 BATCH_SIZE = 64
 imageSize = (image_heigh, image_weigh)
@@ -62,7 +62,7 @@ importlib.reload(img_gen)
 image_heigh = 80
 image_weigh = 80
 NUM_COLORS = 3
-BATCH_SIZE = 32
+BATCH_SIZE = 128
 imageSize = (image_heigh, image_weigh)
 
 train_generator, validation_generator = img_gen.createImageGenerator(
@@ -90,7 +90,7 @@ latent_space_dimension = 256
 vae, vae_encoder, vae_decoder = cconv_vae.cConvVae().build_vae(
    image_shape, 
    NUM_PIXELS, 
-   [2048], 
+   [2048, 1024, 512], 
    latent_space_dimension,
    'LeakyReLU',
    'sigmoid',
@@ -156,6 +156,9 @@ for e in range(1, epoch_count+1):
    if(e%image_plot_frequency == 0):
       print("current epoch is ",e)
       ploters.plot_model_input_and_output(validation_generator, vae) 
+   if(e%25):
+      train_generator.shuffle = False
+      train_generator.index_array = None
 
 ploters.plot_model_input_and_output(validation_generator, vae)
 
@@ -196,7 +199,7 @@ rows = math.ceil(num_images/images_in_cols)
 # decoderGen = img_gen.ImageGeneratorDecoder(vae_decoder, images_in_cols)
 for i in range(5, train_generator.num_classes):
    one_hot = np.zeros(train_generator.num_classes, dtype=float)
-   one_hot[3] = 1
+   one_hot[1] = 1
    one_hot[i] = 1
    decoderGen = img_gen.ConditionalImageGeneratorDecoder(vae_decoder, images_in_cols,label=one_hot)
    iterator = iter(decoderGen)

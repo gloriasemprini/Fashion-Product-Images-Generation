@@ -31,7 +31,9 @@ def filter_articles(df, classes=CLASSES):
 def get_clean_DF():
     df = pd.read_csv(paths.getDataSetPath('styles.csv'), dtype=str)
     df = df[df.notnull()["baseColour"]] # remove null values from basecolor column
-    black_list = [35467, 36105]
+    black_list = [35467, 36105, 24501, 24502, 24504, 5623, 10804, 12529, 17028, 17029,17736, 23826, 24768, 35575, 35632, 39954, 47084, 5851, 5852, 12348,
+                  37408,37409, 37410, 39374, 39375, 39376,39377, 44998, 45017, 48014, 48015, 50400, 50401, 50402, 58446, 59282]
+    black_list = [str(x) for x in black_list]
     df = df.drop(df[df["id"].isin(black_list)].index)
 
     ## Colour aggregation
