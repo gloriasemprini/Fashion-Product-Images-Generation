@@ -5,10 +5,16 @@ import numpy as np
 import random
 from keras.utils import to_categorical
 from sklearn.preprocessing import LabelEncoder
+import utils.df_preprocessing as preprocess
 
 importlib.reload(ploters)
 
-def createImageGenerator(data_dir, batch_size=64, imageSize = (80,60), rgb=False, class_mode=None):
+def createImageGenerator(
+        data_dir, 
+        batch_size=64, 
+        imageSize = (80,60), 
+        rgb=False, 
+        class_mode=None):
     color_mode =  "rgb" if (rgb) else "grayscale" 
 
     datagen = ImageDataGenerator(
@@ -43,8 +49,19 @@ def createImageGenerator(data_dir, batch_size=64, imageSize = (80,60), rgb=False
 
     return train_data_generator, validation_data_generator
 
-def create_image_generator_df(df, data_dir, batch_size=64, imageSize = (80,60), rgb=False, class_mode=None):
+def create_image_generator_df(
+        data_dir, 
+        classes,
+        batch_size=64, 
+        imageSize = (80,60), 
+        rgb=False, 
+        class_mode=None,):
     color_mode =  "rgb" if (rgb) else "grayscale" 
+    y = ["articleType", "baseColour"] if(class_mode=="multi_output") else "articleType"
+
+    df = preprocess.filter_articles(preprocess.get_clean_DF(), classes=classes)
+    def append_ext(id): return id+".jpg"
+    df['id'] = df['id'].apply(append_ext)
     
     articleType_encoder = LabelEncoder()
     color_encoder = LabelEncoder()
@@ -60,7 +77,7 @@ def create_image_generator_df(df, data_dir, batch_size=64, imageSize = (80,60), 
         df,
         data_dir,
         x_col="id",
-        y_col=["articleType", "baseColour"],
+        y_col=y,
         color_mode=color_mode,
         target_size=imageSize,
         batch_size=batch_size,
@@ -73,7 +90,7 @@ def create_image_generator_df(df, data_dir, batch_size=64, imageSize = (80,60), 
         df,
         data_dir,
         x_col="id",
-        y_col=["articleType", "baseColour"],
+        y_col=y,
         color_mode=color_mode,
         target_size=imageSize,
         batch_size=batch_size,
@@ -81,8 +98,9 @@ def create_image_generator_df(df, data_dir, batch_size=64, imageSize = (80,60), 
         shuffle=True,
         subset='validation'
     )
-    train_data_generator = MultilabelImageDataGenerator(train_data_generator, articleType_encoder, color_encoder)
-    validation_data_generator = MultilabelImageDataGenerator(validation_data_generator, articleType_encoder, color_encoder)
+    if(class_mode=="multi_output"):
+        train_data_generator = MultilabelImageDataGenerator(train_data_generator, articleType_encoder, color_encoder)
+        validation_data_generator = MultilabelImageDataGenerator(validation_data_generator, articleType_encoder, color_encoder)
     
     return train_data_generator, validation_data_generator
 def plotGeneratedImages(generator):
@@ -141,7 +159,7 @@ class ConditionalImageGeneratorDecoder:
         for k in range(self.batch_size):
             random_sample = []
             for i in range(self.encoder_input_size):
-                random_sample.append(random.normalvariate(0,1))
+                random_sample.append(random.normalvariate(0,0.6))
             inputs.append(random_sample)
         generated_images = self.model.predict([np.array(inputs), np.array(self.labels)],verbose=0)
         

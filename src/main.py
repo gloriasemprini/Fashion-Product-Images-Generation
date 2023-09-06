@@ -23,6 +23,33 @@ import utils.image_generator as img_gen
 import metrics.fid as fid
 import utils.df_preprocessing as preprocess
 
+#### Possible classes:
+
+# "Watches" #2542 !
+# "Handbags" #1759 !
+# "Sunglasses" #1073 !
+# "Belts" #813 !
+# "Backpacks" #724
+# "Sarees" #475
+# "Deodorant" #347
+# "Nail Polish" #329
+# "Ties" #263
+
+# "Sports Shoes" #2036
+# "Flip Flops" #916 !
+# "Formal Shoes" #637
+
+
+### 
+# "Casual Shoes" #2846
+# "Flats" #500
+# "Heels" #1323
+
+
+
+ 
+CLASSES = ["Watches", "Handbags", "Sunglasses", "Belts", "Flip Flops"]
+
 # %%
 importlib.reload(v1)
 importlib.reload(img_gen)
@@ -34,45 +61,27 @@ importlib.reload(preprocess)
 # %% DF Generator
 importlib.reload(img_gen)
 importlib.reload(preprocess)
-def append_ext(id):
-    return id+".jpg"
+
 
 image_heigh = 64
 image_weigh = 64
 NUM_COLORS = 3
-BATCH_SIZE = 64
+BATCH_SIZE = 128
 imageSize = (image_heigh, image_weigh)
-df = preprocess.filter_articles(preprocess.get_clean_DF())
-df['id'] = df['id'].apply(append_ext)
+with_color_label = True
+
+
+class_mode = "multi_output" if(with_color_label) else "categorical"
 train_generator, validation_generator  = img_gen.create_image_generator_df(
-    df,
     paths.IMG_FOLDER,
+    CLASSES,
     imageSize=imageSize,
     batch_size=BATCH_SIZE,
     rgb=(NUM_COLORS==3),
-    class_mode='multi_output'
+    class_mode=class_mode
 )
+num_classes = train_generator.num_classes if(with_color_label) else len(train_generator.class_indices)
 
-
-
-img_gen.plotGeneratedImages(train_generator)
-
-# %% Generator
-importlib.reload(img_gen)
-image_heigh = 80
-image_weigh = 80
-NUM_COLORS = 3
-BATCH_SIZE = 128
-imageSize = (image_heigh, image_weigh)
-
-train_generator, validation_generator = img_gen.createImageGenerator(
-   paths.COLOR_IMG_FOLDER,
-   imageSize=imageSize,
-   batch_size=BATCH_SIZE,
-   rgb=(NUM_COLORS==3),
-   class_mode='categorical')
-
-# train_generator.classes = ['Heels']
 
 img_gen.plotGeneratedImages(train_generator)
 
@@ -86,15 +95,15 @@ importlib.reload(cconv_vae)
 
 NUM_PIXELS = image_heigh * image_weigh * NUM_COLORS
 image_shape = (image_heigh, image_weigh, NUM_COLORS)
-latent_space_dimension = 256
+latent_space_dimension = 64
 vae, vae_encoder, vae_decoder = cconv_vae.cConvVae().build_vae(
    image_shape, 
    NUM_PIXELS, 
-   [2048, 1024, 512], 
+   [2048, 1024], 
    latent_space_dimension,
    'LeakyReLU',
    'sigmoid',
-   train_generator.num_classes)
+   num_classes)
 
 vae.summary()
 v1.plotVAE(vae)
@@ -120,8 +129,8 @@ val_loss_metrics=[]
 
 # %% =========================================== Manual training
 
-epoch_count = 32
-image_plot_frequency = 4
+epoch_count = 2
+image_plot_frequency = 2
 
 def batch_eleboration(model, generator, validation=False):
    n = 0
@@ -156,14 +165,14 @@ for e in range(1, epoch_count+1):
    if(e%image_plot_frequency == 0):
       print("current epoch is ",e)
       ploters.plot_model_input_and_output(validation_generator, vae) 
-   if(e%25):
-      train_generator.shuffle = False
-      train_generator.index_array = None
+   # if(e%25):
+   #    train_generator.shuffle = False
+   #    train_generator.index_array = None
 
 ploters.plot_model_input_and_output(validation_generator, vae)
 
 ploters.plot_losses_from_array(loss_metrics,val_loss_metrics)
-# %%  ============= Automatic TRAINING====================
+# %%  ============= Automatic TRAINING==================== not work with label inputs
 epoch_count = 2
 patience=10
 
@@ -191,16 +200,16 @@ ploters.plot_generated_images([generated_watches], 1, 5)
 
 
 # %% Autogenerate new images
-
-num_images = 10
+importlib.reload(img_gen)
+num_images = 5
 images_in_cols = 5
 rows = math.ceil(num_images/images_in_cols)
 
 # decoderGen = img_gen.ImageGeneratorDecoder(vae_decoder, images_in_cols)
-for i in range(5, train_generator.num_classes):
+for i in range(len(preprocess.CLASSES), train_generator.num_classes):
    one_hot = np.zeros(train_generator.num_classes, dtype=float)
-   one_hot[1] = 1
-   one_hot[i] = 1
+   one_hot[0] = 1
+   one_hot[i] = 0.9
    decoderGen = img_gen.ConditionalImageGeneratorDecoder(vae_decoder, images_in_cols,label=one_hot)
    iterator = iter(decoderGen)
 
@@ -210,11 +219,29 @@ for i in range(5, train_generator.num_classes):
 
    ploters.plot_generated_images(generated_images,rows,images_in_cols, figsize=(10, 5))
 
-   if(latent_space_dimension == 2):
-      ploters.plot_2d_latent_space(vae_decoder, image_shape)
+if(latent_space_dimension == 2):
+   ploters.plot_2d_latent_space(vae_decoder, image_shape)
 
 
+# %%
+importlib.reload(img_gen)
+num_images = len(preprocess.CLASSES)
+images_in_cols = len(preprocess.CLASSES)
+rows = math.ceil(num_images/images_in_cols)
 
+# decoderGen = img_gen.ImageGeneratorDecoder(vae_decoder, images_in_cols)
+arr = []
+for clas in range(images_in_cols):
+   generated_images=[]
+   for color  in range(len(preprocess.CLASSES), train_generator.num_classes):
+      one_hot = np.zeros(train_generator.num_classes, dtype=float)
+      one_hot[clas] = 1
+      one_hot[color] = 1
+      decoderGen = img_gen.ConditionalImageGeneratorDecoder(vae_decoder, 1,label=one_hot)
+      iterator = iter(decoderGen)
+      generated_images.append(next(iterator)[0])    
+
+   ploters.plot_generated_images([generated_images],rows,images_in_cols, figsize=(10, 5))
 # %% Work only with RGB images
 importlib.reload(fid)
 image_generator = img_gen.ConditionalImageGeneratorDecoder(vae_decoder, BATCH_SIZE, label=one_hot)
