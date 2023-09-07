@@ -23,7 +23,7 @@ import utils.paths as paths
 ### So so
 # "Trousers" #530
  
-CLASSES = ["Flip Flops",  "Sunglasses", "Watches", "Handbags", "Belts"]
+CLASSES = ["Sunglasses"]
 
 def filter_articles(df, classes=CLASSES):
     return df[df['articleType'].isin(classes)]

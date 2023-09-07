@@ -114,7 +114,7 @@ def plot_generated_images(generated_images, nrows, ncols,no_space_between_plots=
   for i in range(nrows):
     for j in range(ncols):
       axs[i,j].axis('off')
-      axs[i,j].imshow(generated_images[i][j])
+      axs[i,j].imshow(generated_images[i][j], cmap='gray')
 
   if no_space_between_plots:
     plt.subplots_adjust(wspace=0,hspace=0)

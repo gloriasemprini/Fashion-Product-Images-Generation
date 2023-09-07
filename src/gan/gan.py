@@ -39,8 +39,8 @@ class Gan:
   def train_gan(self,gan,generator,discriminator,train_generator,train_data_count,input_noise_dim,epoch_count, batch_size,
               get_random_input_func,get_real_batch_func,get_fake_batch_func,concatenate_batches_func,condition_count=-1,
               use_one_sided_labels=False,plt_frq=None,plt_example_count=10,example_shape=(28,28)):
-    iteration_count = int(train_data_count / batch_size)
-    
+    #iteration_count = int(train_data_count / batch_size)
+    iteration_count = len(train_generator)
     print('Epochs: ', epoch_count)
     print('Batch size: ', batch_size)
     print('Iterations: ', iteration_count)
@@ -63,15 +63,14 @@ class Gan:
         avg_g_loss=0
 
         # Training indices are shuffled and grouped into batches
-        batch_indices=gu1.get_random_batch_indices(train_data_count,batch_size)
 
         for i in range(iteration_count):
-            current_batch_size=len(batch_indices[i])
 
             # 1. create a batch with real images from the training set
-            real_batch_x,real_batch_y=get_real_batch_func(train_generator,batch_indices[i],0.9 if use_one_sided_labels else 1)
+            real_batch_x,real_batch_y=get_real_batch_func(train_generator,0.9 if use_one_sided_labels else 1)
             #real_batch_x=get_real_batch_func(train_generator,batch_indices[i],0.9 if use_one_sided_labels else 1)
 
+            current_batch_size=len(real_batch_x)
             # 2. create noise vectors for the generator and generate the images from the noise
             generator_input=get_random_input_func(current_batch_size, input_noise_dim,condition_count)
             fake_batch_x,fake_batch_y=get_fake_batch_func(generator,current_batch_size,generator_input)
