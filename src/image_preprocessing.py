@@ -34,7 +34,8 @@ importlib.reload(df_preprocessing)
 
 # %%
 df = df_preprocessing.get_clean_DF()
-df["baseColour"].value_counts()
+# df["baseColour"].value_counts()
+df_preprocessing.filter_articles(df)["baseColour"].value_counts()
 # %%
 my_df = get_dataframe_by(df, "baseColour", "Yellow")
 ploters.plotRandomImg(my_df, num=20)
@@ -62,6 +63,17 @@ for cl in df_preprocessing.CLASSES:
     cl_df = get_dataframe_by_article_type(df, cl)
     bw.saveWithColors(cl_df['id'], cl + "/")
     ploters.plotRandomImg(cl_df, path=paths.COLOR_IMG_FOLDER + cl + "/")
+# %% Loading images into colorrrrrrrrrrr folder
+importlib.reload(ploters)
+importlib.reload(bw)
+
+df = df_preprocessing.filter_articles(df)
+for cl in df["baseColour"].unique():
+    cl_df = get_dataframe_by_color(df, cl)
+    path = paths.DATASET_PATH + "colorati/"
+    bw.saveWithColors(cl_df['id'], cl + "/", path)
+    print(cl)
+    ploters.plotRandomImg(cl_df, path=path + cl + "/")
 
 
 # %%

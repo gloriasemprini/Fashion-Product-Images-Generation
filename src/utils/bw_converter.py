@@ -23,17 +23,17 @@ def convert_to_bw(ids):
         bw_image.save(output_path)
 
 
-def saveWithColors(ids, subfolder_name):
-    if not os.path.exists(paths.COLOR_IMG_FOLDER):
-        os.makedirs(paths.COLOR_IMG_FOLDER)
+def saveWithColors(ids, subfolder_name, main_folder=paths.COLOR_IMG_FOLDER):
+    if not os.path.exists(main_folder):
+        os.makedirs(main_folder)
 
-    if not os.path.exists(paths.COLOR_IMG_FOLDER + subfolder_name):
-        os.makedirs(paths.COLOR_IMG_FOLDER + subfolder_name)
+    if not os.path.exists(main_folder + subfolder_name):
+        os.makedirs(main_folder + subfolder_name)
 
     for id in ids:
         image_file = str(id) + ".jpg"
         input_path = os.path.join(paths.IMG_FOLDER, image_file)
-        output_path = os.path.join(paths.COLOR_IMG_FOLDER + subfolder_name, image_file)
+        output_path = os.path.join(main_folder + subfolder_name, image_file)
 
 
         Image.open(input_path).save(output_path)
