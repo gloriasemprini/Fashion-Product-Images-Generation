@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import math
 from PIL import Image
 import random
-
+import utils.image_generator as img_gen
 import utils.paths as paths
 
 
@@ -39,6 +39,41 @@ def plotImagesById(ids, folder=paths.IMG_FOLDER):
     plt.tight_layout()
     plt.show()
 
+
+
+
+
+# Contains functions that allow plot data 
+
+### Images
+def plot_generated_images(generated_images, nrows, ncols,no_space_between_plots=False, figsize=(15, 15)):
+  _, axs = plt.subplots(nrows, ncols, figsize=figsize,squeeze=False)
+
+  for i in range(nrows):
+    for j in range(ncols):
+      axs[i,j].axis('off')
+      axs[i,j].imshow(generated_images[i][j], cmap='gray')
+
+  if no_space_between_plots:
+    plt.subplots_adjust(wspace=0,hspace=0)
+
+  plt.show()
+
+# Used for showing autoencoder input and its corresponding output
+def plot_model_input_and_output(generator, model, num=6):
+   # Trasform 5 random images from validation set
+   val_x, val_y = next(generator)
+   if (len(val_x) < num):
+      val_x, val_y = next(generator) # redo 
+
+   # get first 5 dataset images
+   real_imgs = val_x[:num] 
+   labels = val_y[:num]
+   plot_generated_images([real_imgs], 1, num)
+
+   generated_imgs = model.predict([real_imgs,labels], verbose=0)
+   plot_generated_images([generated_imgs], 1, num)
+
 def plot_2d_latent_space(decoder, image_shape):
   n = 12 # number of images per row and column
   limit=3 # random values are sampled from the range [-limit,+limit]
@@ -57,69 +92,50 @@ def plot_2d_latent_space(decoder, image_shape):
 
   plot_generated_images(generated_images,n,n,True)
 
+### Plot generation
+def plot_model_generated_article_types(model, one_hot_len, rows=1, cols=5):
+  for i in range(one_hot_len):
+    one_hot = np.zeros(one_hot_len, dtype=float)
+    one_hot[i] = 1
+    decoderGen = img_gen.ConditionalImageGeneratorDecoder(model, cols,label=[one_hot])
+    iterator = iter(decoderGen)
 
+    generated_images=[]
+    for _ in range(rows):
+        generated_images.append(next(iterator))      
 
-# Contains functions that allow plot data 
+    plot_generated_images(generated_images,rows,cols)
 
-def plot_2d_data(data_2d,y,titles=None,figsize=(7,7)):
-  _,axs=plt.subplots(1,len(data_2d),figsize=figsize)
+def plot_model_generated_colorfull_article_types(model, num_classes, one_hot_len, rows=1):
+  num_colors = one_hot_len - num_classes
+  for clas in range(num_classes):
+    one_hots = []
+    for color  in range(num_classes, one_hot_len):
+        one_hot = np.zeros(one_hot_len, dtype=float)
+        one_hot[clas] = 1
+        one_hot[color] = 1
+        one_hots.append(one_hot)
+    decoderGen = img_gen.ConditionalImageGeneratorDecoder(model, batch_size=num_colors, labels=one_hots)
 
-  for i in range(len(data_2d)):
-    if (titles!=None):
-      axs[i].set_title(titles[i])
-    scatter=axs[i].scatter(data_2d[i][:,0],data_2d[i][:,1],s=1,c=y[i],cmap=plt.cm.Paired)
-    axs[i].legend(*scatter.legend_elements())
-
-def plot_history(history,metric=None):
-  fig, ax1 = plt.subplots(figsize=(10, 8))
-
-  epoch_count=len(history.history['loss'])
-
-  line1,=ax1.plot(range(1,epoch_count+1),history.history['loss'],label='train_loss',color='orange')
-  ax1.plot(range(1,epoch_count+1),history.history['val_loss'],label='val_loss',color = line1.get_color(), linestyle = '--')
-  ax1.set_xlim([1,epoch_count])
-  ax1.set_ylim([0, max(max(history.history['loss']),max(history.history['val_loss']))])
-  ax1.set_ylabel('loss',color = line1.get_color())
-  ax1.tick_params(axis='y', labelcolor=line1.get_color())
-  ax1.set_xlabel('Epochs')
-  _=ax1.legend(loc='lower left')
-
-  if (metric!=None):
-    ax2 = ax1.twinx()
-    line2,=ax2.plot(range(1,epoch_count+1),history.history[metric],label='train_'+metric)
-    ax2.plot(range(1,epoch_count+1),history.history['val_'+metric],label='val_'+metric,color = line2.get_color(), linestyle = '--')
-    ax2.set_ylim([0, max(max(history.history[metric]),max(history.history['val_'+metric]))])
-    ax2.set_ylabel(metric,color=line2.get_color())
-    ax2.tick_params(axis='y', labelcolor=line2.get_color())
-    _=ax2.legend(loc='upper right')
-
-def show_confusion_matrix(conf_matrix,class_names,figsize=(10,10)):
-  fig, ax = plt.subplots(figsize=figsize)
-  img=ax.matshow(conf_matrix)
-  tick_marks = np.arange(len(class_names))
-  _=plt.xticks(tick_marks, class_names,rotation=45)
-  _=plt.yticks(tick_marks, class_names)
-  _=plt.ylabel('Real')
-  _=plt.xlabel('Predicted')
+    for row in range(rows):
+      plot_generated_images([next(iter(decoderGen))],1,num_colors)
   
-  for i in range(len(class_names)):
-    for j in range(len(class_names)):
-        text = ax.text(j, i, '{0:.1%}'.format(conf_matrix[i, j]),
-                       ha='center', va='center', color='w')
-        
 
-def plot_generated_images(generated_images, nrows, ncols,no_space_between_plots=False, figsize=(10, 10)):
-  _, axs = plt.subplots(nrows, ncols,figsize=figsize,squeeze=False)
+### History
 
-  for i in range(nrows):
-    for j in range(ncols):
-      axs[i,j].axis('off')
-      axs[i,j].imshow(generated_images[i][j], cmap='gray')
+def plot_losses_from_array(training_losses, validation_losses):
+  epochs = list(range(1, len(training_losses) + 1))
 
-  if no_space_between_plots:
-    plt.subplots_adjust(wspace=0,hspace=0)
+  plt.plot(epochs, training_losses, label='Training Loss',  linestyle='-')
 
-  plt.show()
+  # Plot validation losses
+  plt.plot(epochs, validation_losses, label='Validation Loss', linestyle='-')
+
+  # Add labels and a legend
+  plt.xlabel('Epochs')
+  plt.ylabel('Loss')
+  plt.title('Training and Validation Loss Over Epochs')
+  plt.legend()
 
 def plot_gan_losses(d_losses,g_losses):
   fig, ax1 = plt.subplots(figsize=(10, 8))
@@ -138,33 +154,3 @@ def plot_gan_losses(d_losses,g_losses):
   ax2.set_xlabel('Epochs')
   ax2.tick_params(axis='y', labelcolor=line2.get_color())
   _=ax2.legend(loc='upper right')
-
-
-def plot_model_input_and_output(generator, model, num=6):
-   # Trasform 5 random images from validation set
-   val_x, val_y = next(generator)
-   if (len(val_x) < num):
-      val_x, val_y = next(generator) # redo 
-
-   # get first 5 dataset images
-   real_imgs = val_x[:num] 
-   labels = val_y[:num]
-   plot_generated_images([real_imgs], 1, num)
-
-   generated_imgs = model.predict([real_imgs,labels], verbose=0)
-   plot_generated_images([generated_imgs], 1, num)
-
-
-def plot_losses_from_array(training_losses, validation_losses):
-  epochs = list(range(1, len(training_losses) + 1))
-
-  plt.plot(epochs, training_losses, label='Training Loss',  linestyle='-')
-
-  # Plot validation losses
-  plt.plot(epochs, validation_losses, label='Validation Loss', linestyle='-')
-
-  # Add labels and a legend
-  plt.xlabel('Epochs')
-  plt.ylabel('Loss')
-  plt.title('Training and Validation Loss Over Epochs')
-  plt.legend()
