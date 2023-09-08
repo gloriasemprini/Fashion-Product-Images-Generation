@@ -159,29 +159,50 @@ class ImageGeneratorDecoder:
 
     
 
+# class ConditionalImageGeneratorDecoder:
+#     def __init__(self, model, batch_size, labels):
+#         self.model = model
+#         self.batch_size = batch_size
+#         self.encoder_input_size = model.layers[0].input_shape[0][1]
+#         if(len(labels) == 1):
+#             self.labels = [labels[0] for _ in range(batch_size)]
+#         else:
+#             if(len(labels) != batch_size):
+#                 raise Exception("batch size must be equal to labels size")
+#             self.labels = labels
+
+#     def __iter__(self):
+#         return self
+    
+#     def __next__(self):
+#         inputs = []
+#         for k in range(self.batch_size):
+#             random_sample = []
+#             for i in range(self.encoder_input_size):
+#                 random_sample.append(random.normalvariate(0,0.6))
+#             inputs.append(random_sample)
+#         generated_images = self.model.predict([np.array(inputs), np.array(self.labels)],verbose=0)
+        
+#         return generated_images
+    
 class ConditionalImageGeneratorDecoder:
-    def __init__(self, model, batch_size, labels):
+    def __init__(self, model,label_provider):
         self.model = model
-        self.batch_size = batch_size
         self.encoder_input_size = model.layers[0].input_shape[0][1]
-        if(len(labels) == 1):
-            self.labels = [labels[0] for _ in range(batch_size)]
-        else:
-            if(len(labels) != batch_size):
-                raise Exception("batch size must be equal to labels size")
-            self.labels = labels
+        self.label_provider = label_provider
 
     def __iter__(self):
         return self
     
     def __next__(self):
         inputs = []
-        for k in range(self.batch_size):
+        labels = next(self.label_provider)
+        for k in range(len(labels)):
             random_sample = []
             for i in range(self.encoder_input_size):
                 random_sample.append(random.normalvariate(0,0.6))
             inputs.append(random_sample)
-        generated_images = self.model.predict([np.array(inputs), np.array(self.labels)],verbose=0)
+        generated_images = self.model.predict([np.array(inputs), np.array(labels)],verbose=0)
         
         return generated_images
     
@@ -194,6 +215,15 @@ class MultiLabelImageDataGenerator:
         self.color_n_classes =  len(color_encoder.classes_)
         self.num_classes = self.articl_n_classes + self.color_n_classes 
         self.class_indicies = articleType_encoder.classes_
+
+        all_artcle = to_categorical(articleType_encoder.transform(generator.labels[0]))
+        all_colors = to_categorical(color_encoder.transform(generator.labels[1]))
+
+        concatenated = []
+        for i in range(len(all_artcle)):
+            concatenated.append(all_artcle[i].tolist() + all_colors[i].tolist())
+        
+        self.labels = np.array(concatenated, dtype=np.float32)
 
     def __iter__(self):
         return self
@@ -210,5 +240,6 @@ class MultiLabelImageDataGenerator:
     
     def __len__(self):
         return len(self.generator)
+    
 
     

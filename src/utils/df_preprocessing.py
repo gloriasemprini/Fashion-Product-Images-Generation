@@ -16,7 +16,7 @@ def get_clean_DF():
     black_list = [35467, 36105, 24501, 24502, 24504, 5623, 10804, 12529, 17028, 17029,17736, 23826, 24768, 35575, 35632, 39954, 
                   47084, 5851, 5852, 12348, 37408,37409, 37410, 39374, 39375, 39376,39377, 44998, 45017, 48014, 48015, 50400, 
                   50401, 50402, 58446, 59282, 34774,34777, 51301, 47145,47146,34776,34781,47147,58157, 34773, 34888,34779,34780,
-                  34782,47138,47140,47142,47144, 51271,51272, 1790, 6125, 8217, 9573, 9911, 6896, 1535, 1566, 1577, 1581, 4451,
+                  34782,47138,47140,47142,47144, 51271, 51272, 1790, 6125, 8217, 9573, 9911, 6896, 1535, 1566, 1577, 1581, 4451,
                   55004, 19222, 49690, 49699, 12345, 23558, 23559, 23593, 26735, 26781, 26785, 32528, 32531, 32549, 32550, 41904, 
                   43098, 43099, 43100, 44949, 45719, 45720, 45721, 52871, 31847, 36802, 51519, 51522, 51523, 51524, 54651, 54652,
                   56342, 32530, 5364, 5365, 4363, 5582, 5593, 24459, 5381, 5380, 5402,
@@ -36,6 +36,8 @@ def get_clean_DF():
     df[baseColour] = df[baseColour].replace("Grey Melange", "Grey")
     df[baseColour] = df[baseColour].replace("Steel", "Grey")
     df[baseColour] = df[baseColour].replace("Silver", "Grey")
+
+    df[baseColour] = df[baseColour].replace("Skin", "Beige")
 
     df[baseColour] = df[baseColour].replace("Grey", "White") # White + Grey
     df[baseColour] = df[baseColour].replace("Beige", "White") # White + Beige
@@ -68,10 +70,6 @@ def get_clean_DF():
 
     df[baseColour] = df[baseColour].replace("Mustard", "Yellow")
     df[baseColour] = df[baseColour].replace("Gold", "Yellow")
-
-    
-
-    df[baseColour] = df[baseColour].replace("Skin", "Beige")
 
     df[baseColour] = df[baseColour].replace("Cream", "Multi")
     df[baseColour] = df[baseColour].replace("Olive", "Multi")

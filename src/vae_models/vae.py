@@ -64,16 +64,13 @@ class Vae:
       
       return vae,encoder,decoder
 
-def plotVAE(vae):
-  keras.utils.plot_model(vae, show_shapes=True, show_layer_names=True, expand_nested=True)
-
 def vae_loss(vae_input,vae_ouput,mu,log_var,kl_coefficient, input_count):
   #Reconstruction loss
-  # reconstruction_loss = keras.losses.mean_squared_error(vae_input,vae_ouput) * input_count
   vae_input = vae_input[0] if(type(vae_input) is list) else vae_input
   x = keras.layers.Reshape((input_count,))(vae_input)
   y = keras.layers.Reshape((input_count,))(vae_ouput)
   reconstruction_loss = keras.losses.mean_squared_error(x, y) * input_count
+  # reconstruction_loss = keras.losses.mean_squared_error(vae_input,vae_ouput) * input_count
 
   #Regularization loss
   kl_loss = 0.5 * K.sum(K.square(mu) + K.exp(log_var) - log_var - 1, axis = -1)

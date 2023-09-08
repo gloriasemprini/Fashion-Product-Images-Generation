@@ -17,14 +17,14 @@ def compute_embeddings(dataloader, count, inception_model):
     for _ in range(count):
         images = next(it)
         if(type(images) is tuple):
-            images, labels = images
-        embeddings = inception_model.predict(images)
+            images, _ = images
+        embeddings = inception_model.predict(images, verbose=0)
         image_embeddings.extend(embeddings)
     return np.array(image_embeddings)
 
 
 def getFid(real_img_generator, fake_img_generator, image_shape ):
-    count = len(real_img_generator) - 1 
+    count = len(real_img_generator) - 1
 
     inception_model = getInceptionModel(image_shape)
 
@@ -32,7 +32,11 @@ def getFid(real_img_generator, fake_img_generator, image_shape ):
     real_image_embeddings = compute_embeddings(real_img_generator, count, inception_model)
 
     # compute embeddings for generated images
-    generated_image_embeddings = compute_embeddings(fake_img_generator, count, inception_model)
+    generated_image_embeddings= compute_embeddings(fake_img_generator, count, inception_model)
+
+    if(len(generated_image_embeddings) > len(real_image_embeddings)):
+        generated_image_embeddings = generated_image_embeddings[:len(real_image_embeddings)]
+
 
 
     print("Real embedding shape: " + str(real_image_embeddings.shape))
@@ -46,12 +50,13 @@ def getFid(real_img_generator, fake_img_generator, image_shape ):
         ssdiff = np.sum((mu1 - mu2)**2.0)
         # calculate sqrt of product between cov
         covmean = linalg.sqrtm(sigma1.dot(sigma2))
+
         # check and correct imaginary numbers from sqrt
-        if np.iscomplexobj(covmean):
-            covmean = covmean.real
-            # calculate score
-            fid = ssdiff + np.trace(sigma1 + sigma2 - 2.0 * covmean)
-            return fid
+        # if np.iscomplexobj(covmean):
+        covmean = covmean.real
+        # calculate score
+        fid = ssdiff + np.trace(sigma1 + sigma2 - 2.0 * covmean)
+        return fid
 
 
     fid = calculate_fid(real_image_embeddings, generated_image_embeddings)

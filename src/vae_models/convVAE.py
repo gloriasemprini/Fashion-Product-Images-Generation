@@ -69,9 +69,10 @@ class ConvVae(vae.Vae):
 
         return vae,encoder,decoder
     
-    def create_conv_block(self, prev_layer, channels, activation, kernel_size=3, padding='same',):
+    def create_conv_block(self, prev_layer, channels, activation, kernel_size=3, padding='same', norm=False):
         prev_layer = layers.Conv2D(channels, kernel_size, padding=padding, use_bias=False)(prev_layer)
-        # prev_layer = layers.BatchNormalization()(prev_layer)
+        if(norm):
+            prev_layer = layers.BatchNormalization()(prev_layer)
         prev_layer = layers.Activation(activation)(prev_layer) 
         return prev_layer
 
@@ -83,9 +84,7 @@ class ConvVae(vae.Vae):
         return prev_layer
 
     def create_upsampling_conv_block(self, prev_layer, channels, activation, kernel_size = 3):
-        # prev_layer = layers.UpSampling2D()(prev_layer)
         prev_layer = layers.Conv2DTranspose(channels, kernel_size,strides=2, padding="same")(prev_layer)
         prev_layer = layers.BatchNormalization()(prev_layer)
         prev_layer = layers.Activation(activation)(prev_layer) 
-        # prev_layer = self.create_conv_block(prev_layer, channels,hidden_activation, kernel_size = kernel_size)
         return prev_layer

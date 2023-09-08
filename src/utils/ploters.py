@@ -92,12 +92,19 @@ def plot_2d_latent_space(decoder, image_shape):
 
   plot_generated_images(generated_images,n,n,True)
 
+def infinite_generator(value):
+    while True:
+        yield value
+
+label_provider = lambda a: infinite_generator(a)
+
 ### Plot generation
 def plot_model_generated_article_types(model, one_hot_len, rows=1, cols=5):
   for i in range(one_hot_len):
     one_hot = np.zeros(one_hot_len, dtype=float)
     one_hot[i] = 1
-    decoderGen = img_gen.ConditionalImageGeneratorDecoder(model, cols,label=[one_hot])
+    one_hots = [one_hot] * cols
+    decoderGen = img_gen.ConditionalImageGeneratorDecoder(model, label_provider(one_hots))
     iterator = iter(decoderGen)
 
     generated_images=[]
@@ -115,13 +122,23 @@ def plot_model_generated_colorfull_article_types(model, num_classes, one_hot_len
         one_hot[clas] = 1
         one_hot[color] = 1
         one_hots.append(one_hot)
-    decoderGen = img_gen.ConditionalImageGeneratorDecoder(model, batch_size=num_colors, labels=one_hots)
+    decoderGen = img_gen.ConditionalImageGeneratorDecoder(model, label_provider(one_hots))
 
     for row in range(rows):
       plot_generated_images([next(iter(decoderGen))],1,num_colors)
   
 
 ### History
+def plot_fid(fid_values):
+  checkpoints = range(1, len(fid_values) + 1)
+
+  plt.figure(figsize=(10, 6))
+  plt.plot(checkpoints, fid_values, marker='o', linestyle='-')
+  plt.title('FID Changes by Checkpoint')
+  plt.xlabel('Checkpoint')
+  plt.ylabel('FID Value')
+  plt.grid(True)
+
 
 def plot_losses_from_array(training_losses, validation_losses):
   epochs = list(range(1, len(training_losses) + 1))
