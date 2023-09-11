@@ -3,8 +3,6 @@ import tensorflow as tf
 from tensorflow import keras
 import importlib
 import time
-import numpy as np
-import random
 from keras.utils import to_categorical
 
 import utils.paths as paths
@@ -33,7 +31,7 @@ import utils.df_preprocessing as preprocess
 # "Flip Flops" #916 !
 # "Formal Shoes" #637
 
-CLASSES = ["Watches", "Sunglasses", "Nail Polish", "Flip Flops", "Sarees"]
+CLASSES = ["Watches"]
 
 
 def labels_provider(l, n): 
@@ -111,7 +109,7 @@ mu=vae.get_layer('mu').output
 log_var=vae.get_layer('log_var').output
 
 vae.add_loss(ccvae.vae_loss(vae_input,vae_output,mu,log_var,kl_coefficient,num_pixels))
-vae.compile(optimizer=tf.keras.optimizers.Adam(clipnorm=0.001),run_eagerly=True) # for debag  run_eagerly=True
+vae.compile(optimizer=tf.keras.optimizers.Adam(clipnorm=0.001)) # for debag  run_eagerly=True
 
 
 loss_metrics=[]
