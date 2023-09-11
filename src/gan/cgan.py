@@ -13,7 +13,7 @@ import utils.gan_utils as gu1
 
 
 class cGan:
-  def build_cgan(self,input_noise_dim,condition_dim,neuron_count_per_hidden_layer,image_shape,n_pixel,hidden_activation,generator_output_activation):
+  def build_cgan(self,input_noise_dim,neuron_count_per_hidden_layer,image_shape,n_pixel,hidden_activation,generator_output_activation, condition_dim):
     input_noise=layers.Input(shape=input_noise_dim, name='input_noise')
     input_condition=layers.Input(shape=condition_dim, name='input_condition')
     
@@ -26,13 +26,11 @@ class cGan:
       prev_layer=hidden_layer
 
     generator_output = layers.Dense(n_pixel, activation=generator_output_activation,name='generator_output')(prev_layer)
-    generator_output.add(layers.Reshape(image_shape))
     generator = keras.Model([input_noise,input_condition], generator_output, name='generator')
 
     #Discriminator
     discriminator_input_sample = layers.Input(shape=image_shape, name='discriminator_input_sample')
     discriminator_input = layers.Concatenate(name='discriminator_input')([discriminator_input_sample, input_condition])
-    discriminator_input.add(layers.Reshape((n_pixel,)))
 
     prev_layer=discriminator_input
     for neuron_count in reversed(neuron_count_per_hidden_layer):

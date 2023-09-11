@@ -2,7 +2,6 @@ import pandas as pd
 import utils.paths as paths
 
 
-
 # CLASSES = ["Watches", "Handbags", "Sunglasses", "Belts", "Flip Flops",
 #             "Backpacks", "Sarees", "Deodorant", "Nail Polish", "Ties"] 
 # CLASSES = ["Sports Shoes", "Formal Shoes", "Ties", "Nail Polish", "Deodorant", "Sarees"] 

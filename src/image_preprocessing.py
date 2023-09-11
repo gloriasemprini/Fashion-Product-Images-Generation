@@ -35,7 +35,7 @@ importlib.reload(df_preprocessing)
 # %%
 df = df_preprocessing.get_clean_DF()
 # df["baseColour"].value_counts()
-df_preprocessing.filter_articles(df)["baseColour"].value_counts()
+df_preprocessing.filter_articles(df, ["Watches", "Sunglasses"])["baseColour"].value_counts()
 # %%
 my_df = get_dataframe_by(df, "baseColour", "Yellow")
 ploters.plot_random_image(my_df, num=20)
@@ -59,7 +59,7 @@ ploters.plot_images_by_id(selected_image_ids)
 importlib.reload(ploters)
 importlib.reload(bw)
 
-for cl in df_preprocessing.CLASSES:
+for cl in ["Watches", "Sunglasses"]:
     cl_df = get_dataframe_by_article_type(df, cl)
     bw.saveWithColors(cl_df['id'], cl + "/")
     ploters.plot_random_image(cl_df, path=paths.COLOR_IMG_FOLDER + cl + "/")
