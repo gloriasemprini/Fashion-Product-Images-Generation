@@ -30,6 +30,25 @@ importlib.reload(ploters)
 importlib.reload(g1)
 importlib.reload(cg1)
 importlib.reload(g_ut)
+
+# %%
+#### Possible classes:
+
+# "Watches" #2542 !
+# "Handbags" #1759 !
+# "Sunglasses" #1073 !
+# "Belts" #813 !
+# "Backpacks" #724
+# "Sarees" #475
+# "Deodorant" #347
+# "Nail Polish" #329
+# "Ties" #263
+
+# "Sports Shoes" #2036
+# "Flip Flops" #916 !
+# "Formal Shoes" #637
+ 
+CLASSES = ["Watches"]
 # %% Generator
 importlib.reload(img_gen)
 image_heigh = 64
@@ -108,6 +127,8 @@ importlib.reload(g_ut)
 generator_output_activation='tanh'
 use_one_sided_labels=True
 optimizer = keras.optimizers.legacy.Adam(learning_rate=0.0002, beta_1=0.5)
+
+input_noise_dim=100
 
 NUM_PIXELS = image_heigh * image_weigh * NUM_COLORS
 image_shape = (image_heigh, image_weigh, NUM_COLORS)
@@ -235,7 +256,7 @@ with tf.device('/device:GPU:0'):
    dcgan_generator.summary()
    dcgan_discriminator.summary()
    g_ut.plotdcGAN(dcgan)
-   optimizer = keras.optimizers.Adam(clipnorm=0.01, learning_rate=0.0002, beta_1=0.8)
+   optimizer = keras.optimizers.Adam(clipnorm=0.01, learning_rate=0.000005, beta_1=0.8)
    #optimizer_a = keras.optimizers.legacy.RMSprop()
    dcgan_discriminator.compile(loss='binary_crossentropy', optimizer=optimizer)
 
@@ -244,7 +265,7 @@ with tf.device('/device:GPU:0'):
 
 # %%
 
-epoch_count=20
+epoch_count=200
 #batch_size=32
 batch_size=64
 #batch_size=128
