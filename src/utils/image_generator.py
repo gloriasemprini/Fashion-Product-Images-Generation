@@ -49,13 +49,28 @@ def createImageGenerator(
 
     return train_data_generator, validation_data_generator
 
-def create_image_generator_df(
+def create_data_provider_df(
         data_dir, 
         classes,
+        class_mode,
         batch_size=64, 
-        imageSize = (80,60), 
-        rgb=False, 
-        class_mode=None,):
+        image_size = (80,60), 
+        rgb=False):
+    """Create an provider of images
+
+    Args:
+        data_dir (string): path to the directory with images
+        classes (list of strings): list with article types that should be uploaded 
+        class_mode (str): "categorical" if one hot encoded label should contain only articleType.
+            "multi_output" if one hot encoded label should contain articleType and baseColour.
+        batch_size (int, optional): Number of images uploaded at each iteration. Defaults to 64.
+        image_size (tuple, optional): image size. Defaults to (80,60).
+        rgb (bool, optional): true if images should be with colors. Defaults to False.
+
+    Returns:
+        MultiLabelImageDataGenerator: for "multi_output"  class_mode
+        DataFrameIterator: for "categorical"and others class_mode
+    """
     color_mode =  "rgb" if (rgb) else "grayscale" 
     y = ["articleType", "baseColour"] if(class_mode=="multi_output") else "articleType"
 
@@ -73,37 +88,37 @@ def create_image_generator_df(
         validation_split=0.1,
     ) 
 
-    train_data_generator = datagen.flow_from_dataframe(
+    train_data_provider = datagen.flow_from_dataframe(
         df,
         data_dir,
         x_col="id",
         y_col=y,
         color_mode=color_mode,
-        target_size=imageSize,
+        target_size=image_size,
         batch_size=batch_size,
         class_mode=class_mode,#'input', 'categorical' 
         shuffle=True, 
         subset='training'
     )
 
-    validation_data_generator = datagen.flow_from_dataframe(
+    val_data_provider = datagen.flow_from_dataframe(
         df,
         data_dir,
         x_col="id",
         y_col=y,
         color_mode=color_mode,
-        target_size=imageSize,
+        target_size=image_size,
         batch_size=batch_size,
         class_mode=class_mode,#'input', 'categorical' 
         shuffle=True,
         subset='validation'
     )
     if(class_mode=="multi_output"):
-        train_data_generator = MultilabelImageDataGenerator(train_data_generator, articleType_encoder, color_encoder)
-        validation_data_generator = MultilabelImageDataGenerator(validation_data_generator, articleType_encoder, color_encoder)
+        train_data_provider = MultiLabelImageDataGenerator(train_data_provider, articleType_encoder, color_encoder)
+        val_data_provider = MultiLabelImageDataGenerator(val_data_provider, articleType_encoder, color_encoder)
     
-    return train_data_generator, validation_data_generator
-def plotGeneratedImages(generator):
+    return train_data_provider, val_data_provider
+def plot_provided_images(generator):
   
     it = next(generator)
     if(type(it) is tuple):
@@ -144,28 +159,54 @@ class ImageGeneratorDecoder:
 
     
 
+# class ConditionalImageGeneratorDecoder:
+#     def __init__(self, model, batch_size, labels):
+#         self.model = model
+#         self.batch_size = batch_size
+#         self.encoder_input_size = model.layers[0].input_shape[0][1]
+#         if(len(labels) == 1):
+#             self.labels = [labels[0] for _ in range(batch_size)]
+#         else:
+#             if(len(labels) != batch_size):
+#                 raise Exception("batch size must be equal to labels size")
+#             self.labels = labels
+
+#     def __iter__(self):
+#         return self
+    
+#     def __next__(self):
+#         inputs = []
+#         for k in range(self.batch_size):
+#             random_sample = []
+#             for i in range(self.encoder_input_size):
+#                 random_sample.append(random.normalvariate(0,0.6))
+#             inputs.append(random_sample)
+#         generated_images = self.model.predict([np.array(inputs), np.array(self.labels)],verbose=0)
+        
+#         return generated_images
+    
 class ConditionalImageGeneratorDecoder:
-    def __init__(self, model, batch_size, label):
+    def __init__(self, model,label_provider):
         self.model = model
-        self.batch_size = batch_size
         self.encoder_input_size = model.layers[0].input_shape[0][1]
-        self.labels = [label for _ in range(batch_size)]
+        self.label_provider = label_provider
 
     def __iter__(self):
         return self
     
     def __next__(self):
         inputs = []
-        for k in range(self.batch_size):
+        labels = next(self.label_provider)
+        for k in range(len(labels)):
             random_sample = []
             for i in range(self.encoder_input_size):
                 random_sample.append(random.normalvariate(0,0.6))
             inputs.append(random_sample)
-        generated_images = self.model.predict([np.array(inputs), np.array(self.labels)],verbose=0)
+        generated_images = self.model.predict([np.array(inputs), np.array(labels)],verbose=0)
         
         return generated_images
     
-class MultilabelImageDataGenerator:
+class MultiLabelImageDataGenerator:
     def __init__(self, generator, articleType_encoder, color_encoder):
         self.generator = generator
         self.articleType_encoder = articleType_encoder
@@ -174,6 +215,15 @@ class MultilabelImageDataGenerator:
         self.color_n_classes =  len(color_encoder.classes_)
         self.num_classes = self.articl_n_classes + self.color_n_classes 
         self.class_indicies = articleType_encoder.classes_
+
+        all_artcle = to_categorical(articleType_encoder.transform(generator.labels[0]))
+        all_colors = to_categorical(color_encoder.transform(generator.labels[1]))
+
+        concatenated = []
+        for i in range(len(all_artcle)):
+            concatenated.append(all_artcle[i].tolist() + all_colors[i].tolist())
+        
+        self.labels = np.array(concatenated, dtype=np.float32)
 
     def __iter__(self):
         return self
@@ -190,5 +240,6 @@ class MultilabelImageDataGenerator:
     
     def __len__(self):
         return len(self.generator)
+    
 
     
