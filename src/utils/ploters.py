@@ -7,7 +7,7 @@ import utils.image_generator as img_gen
 import utils.paths as paths
 
 
-def plotRandomImg(df, num=15, path=paths.IMG_FOLDER):
+def plot_random_image(df, num=15, path=paths.IMG_FOLDER):
   """ plot random 15 images from dataframe
 
   Args:
@@ -17,9 +17,9 @@ def plotRandomImg(df, num=15, path=paths.IMG_FOLDER):
   """
   ids = df['id']
   selected_image_ids = random.sample(ids.tolist(), num)
-  plotImagesById(selected_image_ids, path)
+  plot_images_by_id(selected_image_ids, path)
 
-def plotImagesById(ids, folder=paths.IMG_FOLDER):
+def plot_images_by_id(ids, folder=paths.IMG_FOLDER):
     """Plot images by their id
 
     Args:
@@ -30,7 +30,7 @@ def plotImagesById(ids, folder=paths.IMG_FOLDER):
 
     for i, ax in enumerate(axes.flatten()):
         image_id = ids[i]
-        image_path = paths.getImagePath(image_id, folder)  
+        image_path = paths.get_image_path(image_id, folder)  
         img = Image.open(image_path)
         ax.imshow(img, cmap='Greys_r')
         ax.set_title(image_id)
@@ -117,7 +117,7 @@ def plot_model_generated_colorfull_article_types(model, num_classes, one_hot_len
   num_colors = one_hot_len - num_classes
   for clas in range(num_classes):
     one_hots = []
-    for color  in range(num_classes, one_hot_len):
+    for color in range(num_classes, one_hot_len):
         one_hot = np.zeros(one_hot_len, dtype=float)
         one_hot[clas] = 1
         one_hot[color] = 1

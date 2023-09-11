@@ -10,7 +10,7 @@ def filter_articles(df, classes):
     return df[df['articleType'].isin(classes)]
 
 def get_clean_DF():
-    df = pd.read_csv(paths.getDataSetPath('styles.csv'), dtype=str)
+    df = pd.read_csv(paths.get_dataset_folder_file_path('styles.csv'), dtype=str)
     df = df[df.notnull()["baseColour"]] # remove null values from basecolor column
     #black list contains id of articles with wrong article type or with other problems
     black_list = [35467, 36105, 24501, 24502, 24504, 5623, 10804, 12529, 17028, 17029,17736, 23826, 24768, 35575, 35632, 39954, 

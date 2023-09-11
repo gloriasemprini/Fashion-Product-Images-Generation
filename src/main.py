@@ -11,10 +11,7 @@ import utils.paths as paths
 import utils.callbacks as callbacks
 import utils.ploters as ploters 
 
-import vae_models.vae as v1
-import vae_models.flatVAE as flat_vae
-import vae_models.convVAE as conv_vae
-import vae_models.cConvVAE as cconv_vae
+import vae_models.ccvae as ccvae
 
 import utils.image_generator as img_gen
 import metrics.fid as fid
@@ -36,7 +33,7 @@ import utils.df_preprocessing as preprocess
 # "Flip Flops" #916 !
 # "Formal Shoes" #637
 
-CLASSES = ["Watches", "Sunglasses", "Nail Polish"]
+CLASSES = ["Watches", "Sunglasses", "Nail Polish", "Flip Flops", "Sarees"]
 
 
 def labels_provider(l, n): 
@@ -46,7 +43,6 @@ def labels_provider(l, n):
       yield poped
 
 # %%
-importlib.reload(v1)
 importlib.reload(img_gen)
 importlib.reload(paths)
 importlib.reload(ploters)
@@ -58,21 +54,23 @@ importlib.reload(img_gen)
 importlib.reload(preprocess)
 
 #parameters
-BATCH_SIZE = 32
+BATCH_SIZE = 128
 image_heigh = 80
 image_weigh = 80
-image_size = (image_heigh, image_weigh)
 num_color_dimensions = 3 # 1 for greyscale or 3 for RGB
 with_color_label = True # class label inlude article color
 
 # Computed parameters
+image_size = (image_heigh, image_weigh)
+image_shape = (image_heigh, image_weigh, num_color_dimensions)
+num_pixels = image_heigh * image_weigh * num_color_dimensions
 rgb_on = (num_color_dimensions==3)
 is_fid_active = image_heigh == image_weigh and image_weigh > 75 and rgb_on
 if(with_color_label and (not rgb_on)): # error check
    raise Exception("Illegal state: color label can be used only with RGB images")
 
 class_mode = "multi_output" if(with_color_label) else "categorical"
-train_generator, validation_generator  = img_gen.create_image_generator_df(
+train_provider, val_provider  = img_gen.create_data_provider_df(
     paths.IMG_FOLDER,
     CLASSES,
     class_mode=class_mode,
@@ -80,33 +78,25 @@ train_generator, validation_generator  = img_gen.create_image_generator_df(
     batch_size=BATCH_SIZE,
     rgb=rgb_on,
 )
-one_hot_label_len = train_generator.num_classes if(with_color_label) else len(train_generator.class_indices)
-if(type(train_generator) is img_gen.MultiLabelImageDataGenerator):
-    all_one_hot_labels = train_generator.labels
+one_hot_label_len = train_provider.num_classes if(with_color_label) else len(train_provider.class_indices)
+if(type(train_provider) is img_gen.MultiLabelImageDataGenerator):
+    all_one_hot_labels = train_provider.labels
 else:
-    all_one_hot_labels = to_categorical(train_generator.labels)
+    all_one_hot_labels = to_categorical(train_provider.labels)
 
-img_gen.plotGeneratedImages(train_generator)
+img_gen.plot_provided_images(train_provider)
 
 
 # %% VAE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-importlib.reload(v1)
-importlib.reload(flat_vae)
-importlib.reload(conv_vae)
-importlib.reload(cconv_vae)
+importlib.reload(ccvae)
 
-
-NUM_PIXELS = image_heigh * image_weigh * num_color_dimensions
-image_shape = (image_heigh, image_weigh, num_color_dimensions)
-latent_space_dimension = 32
-internal_dense_layers = [2048, 1024]
-vae, vae_encoder, vae_decoder = cconv_vae.cConvVae().build_vae(
+latent_space_dimension = 64
+internal_dense_layers = [1024, 512]
+vae, vae_encoder, vae_decoder = ccvae.CCVAE().build_ccvae(
    image_shape, 
-   NUM_PIXELS, 
    internal_dense_layers, 
    latent_space_dimension,
    'LeakyReLU',
-   'sigmoid',
    one_hot_label_len)
 
 vae.summary()
@@ -120,7 +110,7 @@ vae_output=vae.output
 mu=vae.get_layer('mu').output
 log_var=vae.get_layer('log_var').output
 
-vae.add_loss(v1.vae_loss(vae_input,vae_output,mu,log_var,kl_coefficient,NUM_PIXELS))
+vae.add_loss(ccvae.vae_loss(vae_input,vae_output,mu,log_var,kl_coefficient,num_pixels))
 vae.compile(optimizer=tf.keras.optimizers.Adam(clipnorm=0.001),run_eagerly=True) # for debag  run_eagerly=True
 
 
@@ -128,17 +118,16 @@ loss_metrics=[]
 val_loss_metrics=[]
 fid_frequency_metrics = []
 
-# val_generator.shuffle = False
-# val_generator.index_array = None
+
 
 
 # %% =========================================== Manual training
 importlib.reload(fid)
 importlib.reload(img_gen)
 
-epoch_count = 100
-image_plot_frequency = 10
-fid_frequency = 10 #
+epoch_count = 64
+image_plot_frequency = 8
+fid_frequency = 8 #
 
 def batch_eleboration(model, generator, validation=False):
    n = 0
@@ -157,22 +146,22 @@ def batch_eleboration(model, generator, validation=False):
 for e in range(1, epoch_count+1):
    start_time = time.time()
 
-   loss = batch_eleboration(vae, train_generator)
+   loss = batch_eleboration(vae, train_provider)
    loss_metrics.append(loss)
 
-   val_loss = batch_eleboration(vae, validation_generator, validation=True)
+   val_loss = batch_eleboration(vae, val_provider, validation=True)
    val_loss_metrics.append(val_loss)
    
    end_time = time.time()
    print('Epoch: {0} exec_time={1:.1f}s  loss={2:.3f} val_loss={3:.3f}'.format(e,end_time - start_time, loss, val_loss))
 
    if(e%image_plot_frequency == 0):
-      ploters.plot_model_input_and_output(validation_generator, vae) 
+      ploters.plot_model_input_and_output(val_provider, vae) 
    if(is_fid_active and e%fid_frequency == 0):
       image_generator = img_gen.ConditionalImageGeneratorDecoder(vae_decoder, labels_provider(all_one_hot_labels, BATCH_SIZE))
-      fid_frequency_metrics.append(fid.getFid(train_generator, image_generator, image_shape))
+      fid_frequency_metrics.append(fid.compute_fid(train_provider, image_generator, image_shape))
 
-ploters.plot_model_input_and_output(validation_generator, vae)
+ploters.plot_model_input_and_output(val_provider, vae)
 
 ploters.plot_losses_from_array(loss_metrics,val_loss_metrics)
 
@@ -185,7 +174,7 @@ if(is_fid_active):
 importlib.reload(ploters)
 importlib.reload(img_gen)
 if(with_color_label):
-   ploters.plot_model_generated_colorfull_article_types(vae_decoder, len(CLASSES), one_hot_label_len, rows=1)
+   ploters.plot_model_generated_colorfull_article_types(vae_decoder, len(CLASSES), one_hot_label_len, rows=2)
 else:
    ploters.plot_model_generated_article_types(vae_decoder, one_hot_label_len, rows=1, cols=10)
 
@@ -200,19 +189,19 @@ epoch_count = 2
 patience=10
 
 early_stop = keras.callbacks.EarlyStopping(monitor='val_loss', patience=patience, restore_best_weights=True)
-intermediateImages = callbacks.CustomFitCallback(validation_generator, epochs_per_fit=10)
+intermediateImages = callbacks.CustomFitCallback(val_provider, epochs_per_fit=10)
 
 history = vae.fit(
-   train_generator, 
+   train_provider, 
    epochs=epoch_count,
-   validation_data=validation_generator,
+   validation_data=val_provider,
    callbacks=[early_stop, intermediateImages])
 
 #Print loss chart
 ploters.plot_history(history)
 
 # Trasform 5 random images from validation set
-train_x = next(validation_generator)
+train_x = next(val_provider)
 
 # get first 5 dataset images
 watches = train_x[0][:5] if(type(train_x) is tuple) else train_x[:5]

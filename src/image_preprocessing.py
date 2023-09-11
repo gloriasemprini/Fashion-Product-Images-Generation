@@ -38,7 +38,7 @@ df = df_preprocessing.get_clean_DF()
 df_preprocessing.filter_articles(df)["baseColour"].value_counts()
 # %%
 my_df = get_dataframe_by(df, "baseColour", "Yellow")
-ploters.plotRandomImg(my_df, num=20)
+ploters.plot_random_image(my_df, num=20)
 
 
 # %%
@@ -52,7 +52,7 @@ analysis.unique_values_for_each_column(df)
 importlib.reload(ploters)
 ids = df['id']
 selected_image_ids = random.sample(ids.tolist(),10)
-ploters.plotImagesById(selected_image_ids)
+ploters.plot_images_by_id(selected_image_ids)
 
 
 # %% Loading images into color folder
@@ -62,7 +62,7 @@ importlib.reload(bw)
 for cl in df_preprocessing.CLASSES:
     cl_df = get_dataframe_by_article_type(df, cl)
     bw.saveWithColors(cl_df['id'], cl + "/")
-    ploters.plotRandomImg(cl_df, path=paths.COLOR_IMG_FOLDER + cl + "/")
+    ploters.plot_random_image(cl_df, path=paths.COLOR_IMG_FOLDER + cl + "/")
 # %% Loading images into colorrrrrrrrrrr folder
 importlib.reload(ploters)
 importlib.reload(bw)
@@ -73,16 +73,16 @@ for cl in df["baseColour"].unique():
     path = paths.DATASET_PATH + "colorati/"
     bw.saveWithColors(cl_df['id'], cl + "/", path)
     print(cl)
-    ploters.plotRandomImg(cl_df, path=path + cl + "/")
+    ploters.plot_random_image(cl_df, path=path + cl + "/")
 
 
 # %%
 my_df = get_dataframe_by_article_type(df, "Trousers")
 # my_df = get_dataframe_by_color(df, "Fluorescent Green")
-ploters.plotRandomImg(my_df, num=20)
+ploters.plot_random_image(my_df, num=20)
 
 # %%
 my_df = get_dataframe_by(df, "baseColour", "Rose")
-ploters.plotRandomImg(my_df, num=20)
+ploters.plot_random_image(my_df, num=20)
 
 

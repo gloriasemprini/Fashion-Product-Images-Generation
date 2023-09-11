@@ -47,7 +47,7 @@ train_generator, validation_generator = img_gen.createImageGenerator(
 #train_generator, validation_generator = im_gen.createImageGenerator(paths.COLOR_IMG_FOLDER, imageSize=imageSize)
 
 
-img_gen.plotGeneratedImages(train_generator)
+img_gen.plot_provided_images(train_generator)
 
 # %% GAN - Model creation
 importlib.reload(g1)

@@ -49,14 +49,14 @@ def createImageGenerator(
 
     return train_data_generator, validation_data_generator
 
-def create_image_generator_df(
+def create_data_provider_df(
         data_dir, 
         classes,
         class_mode,
         batch_size=64, 
         image_size = (80,60), 
         rgb=False):
-    """Create an producer of images
+    """Create an provider of images
 
     Args:
         data_dir (string): path to the directory with images
@@ -88,7 +88,7 @@ def create_image_generator_df(
         validation_split=0.1,
     ) 
 
-    train_data_generator = datagen.flow_from_dataframe(
+    train_data_provider = datagen.flow_from_dataframe(
         df,
         data_dir,
         x_col="id",
@@ -101,7 +101,7 @@ def create_image_generator_df(
         subset='training'
     )
 
-    validation_data_generator = datagen.flow_from_dataframe(
+    val_data_provider = datagen.flow_from_dataframe(
         df,
         data_dir,
         x_col="id",
@@ -114,11 +114,11 @@ def create_image_generator_df(
         subset='validation'
     )
     if(class_mode=="multi_output"):
-        train_data_generator = MultiLabelImageDataGenerator(train_data_generator, articleType_encoder, color_encoder)
-        validation_data_generator = MultiLabelImageDataGenerator(validation_data_generator, articleType_encoder, color_encoder)
+        train_data_provider = MultiLabelImageDataGenerator(train_data_provider, articleType_encoder, color_encoder)
+        val_data_provider = MultiLabelImageDataGenerator(val_data_provider, articleType_encoder, color_encoder)
     
-    return train_data_generator, validation_data_generator
-def plotGeneratedImages(generator):
+    return train_data_provider, val_data_provider
+def plot_provided_images(generator):
   
     it = next(generator)
     if(type(it) is tuple):
