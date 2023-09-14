@@ -13,8 +13,10 @@ import utils.gan_utils as gu1
 class dcGan:
     def build_dcgan(self, input_noise_dim):
         #Generator
-        kernel_ext = 8
-        kernel_int = 4
+        #provare con 5 o 6
+        kernel_ext = 4
+        #provare con anche 2
+        kernel_int = 3
         generator = keras.Sequential(name='generator')
 
         stride = 2
@@ -25,14 +27,14 @@ class dcGan:
         channels_arr = [128,64]
         channels_ext = 256
 
-        generator = self.create_conv_2D_trans(generator, 512, kernel_ext, 1, padding="valid", norm=False)
+        generator = self.create_conv_2D_trans(generator, 512, kernel_ext, stride, padding="valid", norm=False)
 
-        generator = self.create_conv_2D_trans(generator, channels_ext, kernel_int, 1, padding="same", norm=False)
+        generator = self.create_conv_2D_trans(generator, channels_ext, kernel_int, stride, padding="same", norm=False)
 
         for channels in channels_arr:
             generator = self.create_conv_2D_trans(generator, channels, kernel_int, stride, padding="same")
 
-        generator.add(layers.Conv2DTranspose(1,kernel_int,strides=stride,padding='same',activation='sigmoid',name='generator_output'))
+        generator.add(layers.Conv2DTranspose(1,kernel_int,stride,padding='same',activation='sigmoid',name='generator_output'))
 
         #Discriminator
         discriminator = keras.Sequential(name='discriminator')
@@ -41,13 +43,13 @@ class dcGan:
         
         for channels in reversed(channels_arr):
             discriminator = self.create_conv_2D(discriminator, channels, kernel_int, stride, padding="same")
-            
+
         discriminator = self.create_conv_2D(discriminator, channels_ext, kernel_int, stride, padding="same", norm=False)
-        discriminator = self.create_conv_2D(discriminator, 512, kernel_int, 1, padding="same", norm=False)
+        discriminator = self.create_conv_2D(discriminator, 512, kernel_int, stride, padding="same", norm=False)
+        ##provare con kernel_int a 1 nell'ultimo layer con stride 1 (per comprimere filtri)
         discriminator = self.create_conv_2D(discriminator, 1024, kernel_int, 1, padding="same", norm=False)
 
-
-        discriminator.add(layers.Conv2D(1,kernel_ext,strides=1,padding='valid',activation='sigmoid'))
+        discriminator.add(layers.Conv2D(1,kernel_ext,stride,padding='valid',activation='sigmoid'))
         discriminator.add(layers.Reshape((1,),name='discriminator_output'))
 
         #DCGAN

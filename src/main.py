@@ -33,7 +33,7 @@ import utils.df_preprocessing as preprocess
 # "Flip Flops" #916 !
 # "Formal Shoes" #637
 
-CLASSES = ["Watches", "Sunglasses", "Nail Polish", "Flip Flops", "Sarees"]
+CLASSES = ["Watches", "Sunglasses", "Nail Polish", "Flip Flops", "Sarees", "Belts", "Deodorant", "Ties"]
 
 
 def labels_provider(l, n): 
