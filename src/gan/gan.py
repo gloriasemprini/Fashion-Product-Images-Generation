@@ -38,7 +38,7 @@ class Gan:
   
   def train_gan(self,gan,generator,discriminator,train_generator,train_data_count,input_noise_dim,epoch_count, batch_size,
               get_random_input_func,get_real_batch_func,get_fake_batch_func,concatenate_batches_func,condition_count=-1,
-              use_one_sided_labels=False,plt_frq=None,plt_example_count=10,example_shape=(28,28)):
+              use_one_sided_labels=False,plt_frq=None,plt_example_count=10,image_shape=(28,28)):
     #iteration_count = int(train_data_count / batch_size)
     iteration_count = len(train_generator)
     print('Epochs: ', epoch_count)
@@ -51,10 +51,11 @@ class Gan:
       print('Before training:')
       noise_to_plot = get_random_input_func(plt_example_count, input_noise_dim,condition_count)
       generated_output = generator.predict(noise_to_plot,verbose=0)
+      generated_output = (generated_output * 255).astype(np.uint8)
       #generated_images = generated_output.reshape(plt_example_count, example_shape[0], example_shape[1])
       generated_images = generated_output
       ploters.plot_generated_images([generated_images],1,plt_example_count,figsize=(15, 5))
-          
+      
     d_epoch_losses=[]
     g_epoch_losses=[]
     for e in range(1, epoch_count+1):
@@ -82,13 +83,22 @@ class Gan:
             # 4. train discriminator
             d_loss = discriminator.train_on_batch(discriminator_batch_x, discriminator_batch_y)
             
-            # 5. create noise vectors for the generator
-            gan_batch_x = get_random_input_func(current_batch_size, input_noise_dim,condition_count)
-            gan_batch_y = np.ones(current_batch_size)    #Flipped labels
+            i = 0
+            g_loss_sum = 0
+            while i<10: 
+              # 5. create noise vectors for the generator
+              gan_batch_x = get_random_input_func(current_batch_size, input_noise_dim,condition_count)
+              gan_batch_y = np.ones(current_batch_size)    #Flipped labels
 
-            # 6. train generator
-            g_loss = gan.train_on_batch(gan_batch_x, gan_batch_y)
-
+              # 6. train generator
+              g_loss = gan.train_on_batch(gan_batch_x, gan_batch_y)
+              #print('g_loss while: {0:.3f}'.format(g_loss))
+              i = i + 1
+              g_loss_sum += g_loss
+              if (g_loss<2.0):
+                  break
+            g_loss = g_loss_sum / i
+            #print('i while:', i)
             # 7. avg losses
             avg_d_loss+=d_loss*current_batch_size
             avg_g_loss+=g_loss*current_batch_size
@@ -106,7 +116,8 @@ class Gan:
         # Update the plots
         if plt_frq!=None and e%plt_frq == 0:
             generated_output = generator.predict(noise_to_plot,verbose=0)
-            generated_images = generated_output.reshape(plt_example_count, example_shape[0], example_shape[1])
+            generated_output = (generated_output * 255).astype(np.uint8)
+            generated_images = generated_output.reshape(plt_example_count, image_shape[0], image_shape[1], image_shape[2])
             ploters.plot_generated_images([generated_images],1,plt_example_count,figsize=(15, 5))
     
     return d_epoch_losses,g_epoch_losses

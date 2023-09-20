@@ -83,10 +83,16 @@ def create_data_provider_df(
     articleType_encoder.fit(df["articleType"].unique())
     color_encoder.fit(df["baseColour"].unique())
 
+    def prep_fn(img):
+        img = img.astype(np.float32) / 255.0
+        img = (img - 0.5) * 2
+        return img
+    
     datagen = ImageDataGenerator(
-        rescale=1.0 / 255.0,  # Scale pixel values between 0 and 1
+        # rescale=1.0 / 255.0,  # Scale pixel values between 0 and 1
         validation_split=0.1,
-    ) 
+        preprocessing_function=prep_fn
+    )
 
     train_data_provider = datagen.flow_from_dataframe(
         df,

@@ -18,6 +18,9 @@ def plotcGAN(cgan):
 def plotdcGAN(dcgan):
     keras.utils.plot_model(dcgan,show_shapes=True, show_layer_names=True,expand_nested=True)
 
+def plotcdcGAN(cdcgan):
+    keras.utils.plot_model(cdcgan,show_shapes=True, show_layer_names=True,expand_nested=True)
+
 #GAN
 def get_random_batch_indices(data_count,batch_size):
     list_indices=list(range(0,data_count))
@@ -25,7 +28,7 @@ def get_random_batch_indices(data_count,batch_size):
     return list(chunks(list_indices, batch_size))
 
 def get_gan_real_batch(dataset_x,label):
-    train_x = next(dataset_x)
+    train_x, _ = next(dataset_x)
     #batch_x = dataset_x[batch_indices]
     #batch_y=np.full(len(batch_indices),label)
     n_elem_batch = train_x.shape[0]
