@@ -46,7 +46,6 @@ def create_data_provider_df(
     color_encoder.fit(df["baseColour"].unique())
 
 
-    
     datagen = ImageDataGenerator(
         validation_split=validation_split,
         rotation_range=10,

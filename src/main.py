@@ -33,7 +33,6 @@ import utils.df_preprocessing as preprocess
 
 CLASSES = ["Watches", "Sunglasses", "Nail Polish"]
 
-
 def labels_provider(l, n): 
    while len(l) > 0:
       poped = l[:n]

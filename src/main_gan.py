@@ -22,6 +22,8 @@ import gan.gan as g1
 import gan.cgan as cg1
 import gan.dcgan as dcg1
 import utils.gan_utils as g_ut
+from keras.utils import to_categorical
+import utils.df_preprocessing as preprocess
 
 # %%
 importlib.reload(img_gen)
@@ -48,77 +50,43 @@ importlib.reload(g_ut)
 # "Flip Flops" #916 !
 # "Formal Shoes" #637
  
-CLASSES = ["Watches"]
-# %% Generator
+CLASSES = ["Sunglasses"]
+# %% DF Generator
 importlib.reload(img_gen)
+importlib.reload(preprocess)
+
+#parameters
+BATCH_SIZE = 128
 image_heigh = 64
 image_weigh = 64
+num_color_dimensions = 3 # 1 for greyscale or 3 for RGB
+with_color_label = False # class label inlude article color
 
-NUM_COLORS = 1
-BATCH_SIZE = 64
-imageSize = (image_heigh, image_weigh)
+# Computed parameters
+image_size = (image_heigh, image_weigh)
+image_shape = (image_heigh, image_weigh, num_color_dimensions)
+num_pixels = image_heigh * image_weigh * num_color_dimensions
+rgb_on = (num_color_dimensions==3)
+is_fid_active = image_heigh == image_weigh and image_weigh > 75 and rgb_on
+if(with_color_label and (not rgb_on)): # error check
+   raise Exception("Illegal state: color label can be used only with RGB images")
 
-train_generator, validation_generator = img_gen.createImageGenerator(
-   # paths.BW_IMG_FOLDER, 
-   paths.COLOR_IMG_FOLDER,
-   imageSize=imageSize,
-   batch_size=BATCH_SIZE,
-   rgb=(NUM_COLORS==3))
-#train_generator, validation_generator = im_gen.createImageGenerator(paths.COLOR_IMG_FOLDER, imageSize=imageSize)
+class_mode = "multi_output" if(with_color_label) else "categorical"
+train_provider, val_provider  = img_gen.create_data_provider_df(
+    paths.IMG_FOLDER,
+    CLASSES,
+    class_mode=class_mode,
+    image_size=image_size,
+    batch_size=BATCH_SIZE,
+    rgb=rgb_on,
+)
+one_hot_label_len = train_provider.num_classes if(with_color_label) else len(train_provider.class_indices)
+if(type(train_provider) is img_gen.MultiLabelImageDataGenerator):
+    all_one_hot_labels = train_provider.labels
+else:
+    all_one_hot_labels = to_categorical(train_provider.labels)
 
-
-img_gen.plot_provided_images(train_generator)
-
-# %% GAN - Model creation
-importlib.reload(g1)
-importlib.reload(g_ut)
-
-input_noise_dim=100
-NUM_PIXELS = image_heigh * image_weigh * NUM_COLORS
-image_shape = (image_heigh, image_weigh, NUM_COLORS)
-arr = [256,512,1024]
-
-gan, gan_generator, gan_discriminator = g1.Gan().build_gan(
-                                        input_noise_dim,
-                                        arr,
-                                        image_shape,
-                                        NUM_PIXELS,
-                                        'relu',
-                                        'sigmoid')
-
-gan_generator.summary()
-gan_discriminator.summary()
-g_ut.plotGAN(gan)
-
-gan_discriminator.compile(loss='binary_crossentropy', optimizer='sgd')
-
-gan_discriminator.trainable = False
-gan.compile(loss='binary_crossentropy', optimizer='sgd')
-
-
-
-
-# %% Execute training
-epoch_count=1000
-batch_size=100
-
-d_epoch_losses,g_epoch_losses=g1.Gan().train_gan(gan,
-                                        gan_generator,
-                                        gan_discriminator,
-                                        train_generator,
-                                        2000, # TODO numero di immagini
-                                        input_noise_dim,
-                                        epoch_count,
-                                        batch_size,
-                                        g_ut.get_gan_random_input,
-                                        g_ut.get_gan_real_batch,
-                                        g_ut.get_gan_fake_batch,
-                                        g_ut.concatenate_gan_batches,
-                                        plt_frq=20,
-                                        plt_example_count=15,
-                                        example_shape=image_shape)
-
-ploters.plot_gan_losses(d_epoch_losses,g_epoch_losses)
+img_gen.plot_provided_images(train_provider)
 
 # %% Tips prof, ma il normalize input non serve, no?
 importlib.reload(g1)
@@ -129,9 +97,6 @@ use_one_sided_labels=True
 optimizer = keras.optimizers.legacy.Adam(learning_rate=0.0002, beta_1=0.5)
 
 input_noise_dim=100
-
-NUM_PIXELS = image_heigh * image_weigh * NUM_COLORS
-image_shape = (image_heigh, image_weigh, NUM_COLORS)
 arr = [256,512,1024]
 
 hidden_activation=layers.LeakyReLU(alpha=0.2)
@@ -139,10 +104,9 @@ hidden_activation=layers.LeakyReLU(alpha=0.2)
 gan,gan_generator,gan_discriminator=g1.Gan().build_gan(input_noise_dim,
                                               arr,
                                               image_shape,
-                                              NUM_PIXELS,
+                                              num_pixels,
                                               hidden_activation,
                                               generator_output_activation)
-
 
 gan_generator.summary()
 gan_discriminator.summary()
@@ -155,31 +119,26 @@ gan_discriminator.trainable = False
 gan.compile(loss='binary_crossentropy', optimizer=optimizer)
 
 # %%
-epoch_count=100
-batch_size=128
+epoch_count=50
 
 d_epoch_losses,g_epoch_losses=g1.Gan().train_gan(gan,
                                         gan_generator,
                                         gan_discriminator,
-                                        train_generator,
+                                        train_provider,
                                         2000, # TODO numero di immagini
                                         input_noise_dim,
                                         epoch_count,
-                                        batch_size,
+                                        BATCH_SIZE,
                                         g_ut.get_gan_random_input,
                                         g_ut.get_gan_real_batch,
                                         g_ut.get_gan_fake_batch,
                                         g_ut.concatenate_gan_batches,
                                         use_one_sided_labels=use_one_sided_labels,
-                                        plt_frq=10,
+                                        plt_frq=5,
                                         plt_example_count=15,
-                                        example_shape=image_shape)
+                                        image_shape=image_shape)
 
 ploters.plot_gan_losses(d_epoch_losses,g_epoch_losses)
-
-# %%
-"""importlib.reload(cg1)
-importlib.reload(g_ut)
 
 input_noise_dim=100
 hidden_activation=layers.LeakyReLU(alpha=0.2)
@@ -229,7 +188,9 @@ d_epoch_losses,g_epoch_losses=train_gan(cgan,
                                         plt_frq=1,
                                         plt_example_count=15)
 
-plot_gan_losses(d_epoch_losses,g_epoch_losses) """
+plot_gan_losses(d_epoch_losses,g_epoch_losses) 
+
+"""
 # %%
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -288,4 +249,5 @@ with tf.device('/device:GPU:0'):
                                         example_shape=image_shape)
 
    ploters.plot_gan_losses(d_epoch_losses,g_epoch_losses)
-# %%
+"""
+
