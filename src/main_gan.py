@@ -10,13 +10,13 @@ from numba import cuda
 import importlib
 from keras import layers
 
-import graphviz
+# import graphviz
 
 import utils.paths as paths
 import utils.callbacks as callbacks
 import utils.ploters as ploters 
 
-import utils.image_generator as img_gen
+import utils.image_provider as img_gen
 
 import gan.gan as g1
 import gan.cgan as cg1
@@ -265,7 +265,7 @@ with tf.device('/device:GPU:0'):
 
 # %%
 
-epoch_count=200
+epoch_count=20
 #batch_size=32
 batch_size=64
 #batch_size=128

@@ -9,53 +9,15 @@ import utils.df_preprocessing as preprocess
 
 importlib.reload(ploters)
 
-def createImageGenerator(
-        data_dir, 
-        batch_size=64, 
-        imageSize = (80,60), 
-        rgb=False, 
-        class_mode=None):
-    color_mode =  "rgb" if (rgb) else "grayscale" 
-
-    datagen = ImageDataGenerator(
-        rescale=1.0 / 255.0,  # Scale pixel values between 0 and 1
-        # rotation_range=10,
-        validation_split=0.1,
-        # width_shift_range=0.1,
-        # height_shift_range=0.1,
-        # brightness_range=[0.5, 0.5]
-    ) 
-
-
-    train_data_generator = datagen.flow_from_directory(
-        data_dir,
-        color_mode=color_mode,
-        target_size=imageSize,
-        batch_size=batch_size,
-        class_mode=class_mode,#'input', 'categorical' 
-        shuffle=True, # Shuffle the data
-        subset='training'
-    )
-
-    validation_data_generator = datagen.flow_from_directory(
-        data_dir,
-        color_mode=color_mode,
-        target_size=imageSize,
-        batch_size=batch_size,
-        class_mode=class_mode,#'input', 'categorical' 
-        shuffle=True,  # Shuffle the data
-        subset='validation'
-    )
-
-    return train_data_generator, validation_data_generator
-
 def create_data_provider_df(
         data_dir, 
         classes,
         class_mode,
         batch_size=64, 
         image_size = (80,60), 
-        rgb=False):
+        rgb=False,
+        tanh_rescale=False,
+        validation_split = 0.1):
     """Create an provider of images
 
     Args:
@@ -83,10 +45,23 @@ def create_data_provider_df(
     articleType_encoder.fit(df["articleType"].unique())
     color_encoder.fit(df["baseColour"].unique())
 
+
+    
     datagen = ImageDataGenerator(
-        rescale=1.0 / 255.0,  # Scale pixel values between 0 and 1
-        validation_split=0.1,
+        validation_split=validation_split,
+        rotation_range=10,
+        width_shift_range=0.1,
+        height_shift_range=0.1,
     ) 
+
+    if(tanh_rescale):
+        def prep_fn(img):
+            img = img.astype(np.float32) / 255.0
+            img = (img - 0.5) * 2
+            return img
+        datagen.preprocessing_function = prep_fn
+    else:
+        datagen.rescale = 1.0 / 255.0,  # Scale pixel values between 0 and 1
 
     train_data_provider = datagen.flow_from_dataframe(
         df,
@@ -200,7 +175,7 @@ class ConditionalImageGeneratorDecoder:
         for k in range(len(labels)):
             random_sample = []
             for i in range(self.encoder_input_size):
-                random_sample.append(random.normalvariate(0,0.6))
+                random_sample.append(random.normalvariate(0, 0.6))
             inputs.append(random_sample)
         generated_images = self.model.predict([np.array(inputs), np.array(labels)],verbose=0)
         

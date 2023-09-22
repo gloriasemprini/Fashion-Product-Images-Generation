@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import math
 from PIL import Image
 import random
-import utils.image_generator as img_gen
+import utils.image_provider as img_gen
 import utils.paths as paths
 
 
@@ -65,6 +65,17 @@ def plot_model_input_and_output(generator, model, num=6):
    val_x, val_y = next(generator)
    if (len(val_x) < num):
       val_x, val_y = next(generator) # redo 
+
+   # get first 5 dataset images
+   real_imgs = val_x[:num] 
+   labels = val_y[:num]
+   plot_generated_images([real_imgs], 1, num)
+
+   generated_imgs = model.predict([real_imgs,labels], verbose=0)
+   plot_generated_images([generated_imgs], 1, num)
+
+def plot_same_model_input_and_output(val_x, val_y, model, num=6):
+
 
    # get first 5 dataset images
    real_imgs = val_x[:num] 
