@@ -44,6 +44,8 @@ class Gan:
     print('Epochs: ', epoch_count)
     print('Batch size: ', batch_size)
     print('Iterations: ', iteration_count)
+    train_data_count = batch_size * iteration_count
+    print('Num images: ', train_data_count)
     print('')
     
     #Plot generated images

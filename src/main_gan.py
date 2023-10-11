@@ -50,16 +50,16 @@ importlib.reload(g_ut)
 # "Flip Flops" #916 !
 # "Formal Shoes" #637
  
-CLASSES = ["Sunglasses"]
+CLASSES = ["Sunglasses", "Backpacks"]
 # %% DF Generator
 importlib.reload(img_gen)
 importlib.reload(preprocess)
 
 #parameters
-BATCH_SIZE = 128
+BATCH_SIZE = 32
 image_heigh = 64
 image_weigh = 64
-num_color_dimensions = 3 # 1 for greyscale or 3 for RGB
+num_color_dimensions = 1 # 1 for greyscale or 3 for RGB
 with_color_label = False # class label inlude article color
 
 # Computed parameters
@@ -89,50 +89,53 @@ else:
 img_gen.plot_provided_images(train_provider)
 
 # %% Tips prof, ma il normalize input non serve, no?
-importlib.reload(g1)
+importlib.reload(cg1)
 importlib.reload(g_ut)
 
 generator_output_activation='tanh'
 use_one_sided_labels=True
-optimizer = keras.optimizers.legacy.Adam(learning_rate=0.0002, beta_1=0.5)
 
 input_noise_dim=100
-arr = [256,512,1024]
+arr = [128,256,512,1024]
 
 hidden_activation=layers.LeakyReLU(alpha=0.2)
 
-gan,gan_generator,gan_discriminator=g1.Gan().build_gan(input_noise_dim,
-                                              arr,
-                                              image_shape,
-                                              num_pixels,
-                                              hidden_activation,
-                                              generator_output_activation)
+cgan,cgan_generator,cgan_discriminator=cg1.cGan().build_cgan(input_noise_dim,
+                                                         arr,
+                                                         image_shape,
+                                                         num_pixels,
+                                                         hidden_activation,
+                                                         generator_output_activation,
+                                                         one_hot_label_len)
 
-gan_generator.summary()
-gan_discriminator.summary()
-g_ut.plotGAN(gan)
+cgan_generator.summary()
+cgan_discriminator.summary()
+g_ut.plotcGAN(cgan)
 
+optimizer = keras.optimizers.Adam(learning_rate=0.00002)
 
-gan_discriminator.compile(loss='binary_crossentropy', optimizer=optimizer)
+cgan_discriminator.compile(loss='binary_crossentropy', optimizer=optimizer)
 
-gan_discriminator.trainable = False
-gan.compile(loss='binary_crossentropy', optimizer=optimizer)
+cgan_discriminator.trainable = False
+cgan.compile(loss='binary_crossentropy', optimizer=optimizer)
 
 # %%
-epoch_count=50
+importlib.reload(g1)
+epoch_count=500
 
-d_epoch_losses,g_epoch_losses=g1.Gan().train_gan(gan,
-                                        gan_generator,
-                                        gan_discriminator,
+d_epoch_losses,g_epoch_losses=g1.Gan().train_gan(cgan,
+                                        cgan_generator,
+                                        cgan_discriminator,
                                         train_provider,
                                         2000, # TODO numero di immagini
                                         input_noise_dim,
                                         epoch_count,
                                         BATCH_SIZE,
-                                        g_ut.get_gan_random_input,
-                                        g_ut.get_gan_real_batch,
-                                        g_ut.get_gan_fake_batch,
-                                        g_ut.concatenate_gan_batches,
+                                        g_ut.get_cgan_random_input,
+                                        g_ut.get_cgan_real_batch,
+                                        g_ut.get_cgan_fake_batch,
+                                        g_ut.concatenate_cgan_batches,
+                                        condition_count=one_hot_label_len,
                                         use_one_sided_labels=use_one_sided_labels,
                                         plt_frq=5,
                                         plt_example_count=15,
@@ -140,5 +143,4 @@ d_epoch_losses,g_epoch_losses=g1.Gan().train_gan(gan,
 
 ploters.plot_gan_losses(d_epoch_losses,g_epoch_losses)
 
-
-# %% CGAN
+# %%
