@@ -10,13 +10,13 @@ from numba import cuda
 import importlib
 from keras import layers
 
-import graphviz
+# import graphviz
 
 import utils.paths as paths
 import utils.callbacks as callbacks
 import utils.ploters as ploters 
 
-import utils.image_generator as img_gen
+import utils.image_provider as img_gen
 
 import gan.gan as g1
 import gan.cgan as cg1
@@ -142,5 +142,3 @@ d_epoch_losses,g_epoch_losses=g1.Gan().train_gan(cgan,
                                         image_shape=image_shape)
 
 ploters.plot_gan_losses(d_epoch_losses,g_epoch_losses)
-
-# %%

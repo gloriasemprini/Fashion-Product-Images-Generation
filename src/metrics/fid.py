@@ -1,7 +1,7 @@
 from scipy import linalg
 import tensorflow as tf
 import numpy as np
-import utils.image_generator as img_gen
+import utils.image_provider as img_gen
 import math 
 
 # %% FID metric

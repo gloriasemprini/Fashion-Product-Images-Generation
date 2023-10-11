@@ -3,8 +3,6 @@ import tensorflow as tf
 from tensorflow import keras
 import importlib
 import time
-import numpy as np
-import random
 from keras.utils import to_categorical
 
 import utils.paths as paths
@@ -13,7 +11,7 @@ import utils.ploters as ploters
 
 import vae_models.ccvae as ccvae
 
-import utils.image_generator as img_gen
+import utils.image_provider as img_gen
 import metrics.fid as fid
 import utils.df_preprocessing as preprocess
 
@@ -33,8 +31,7 @@ import utils.df_preprocessing as preprocess
 # "Flip Flops" #916 !
 # "Formal Shoes" #637
 
-CLASSES = ["Watches", "Sunglasses", "Nail Polish", "Flip Flops", "Sarees", "Belts", "Deodorant", "Ties"]
-
+CLASSES = ["Watches", "Sunglasses", "Nail Polish"]
 
 def labels_provider(l, n): 
    while len(l) > 0:
@@ -54,11 +51,11 @@ importlib.reload(img_gen)
 importlib.reload(preprocess)
 
 #parameters
-BATCH_SIZE = 128
+BATCH_SIZE = 32
 image_heigh = 80
 image_weigh = 80
 num_color_dimensions = 3 # 1 for greyscale or 3 for RGB
-with_color_label = True # class label inlude article color
+with_color_label = True # inlude article color in label
 
 # Computed parameters
 image_size = (image_heigh, image_weigh)
@@ -90,8 +87,8 @@ img_gen.plot_provided_images(train_provider)
 # %% VAE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 importlib.reload(ccvae)
 
-latent_space_dimension = 64
-internal_dense_layers = [1024, 512]
+latent_space_dimension = 16
+internal_dense_layers = [2048, 512]
 vae, vae_encoder, vae_decoder = ccvae.CCVAE().build_ccvae(
    image_shape, 
    internal_dense_layers, 
@@ -103,15 +100,16 @@ vae.summary()
 keras.utils.plot_model(vae, show_shapes=True, show_layer_names=True, expand_nested=True)
 
 ### Compilation
-kl_coefficient=1
+kl_coefficient=2
 #Information needed to compute the loss function
 vae_input=vae.input
 vae_output=vae.output
 mu=vae.get_layer('mu').output
 log_var=vae.get_layer('log_var').output
 
+
 vae.add_loss(ccvae.vae_loss(vae_input,vae_output,mu,log_var,kl_coefficient,num_pixels))
-vae.compile(optimizer=tf.keras.optimizers.Adam(clipnorm=0.001),run_eagerly=True) # for debag  run_eagerly=True
+vae.compile(optimizer=tf.keras.optimizers.Adam(clipnorm=0.001)) # for debag  run_eagerly=True
 
 
 loss_metrics=[]
@@ -119,14 +117,18 @@ val_loss_metrics=[]
 fid_frequency_metrics = []
 
 
+# Trasform 5 random images from validation set
+val_x, val_y = next(val_provider)
+if (len(val_x) < 10):
+   val_x, val_y = next(val_provider) # redo 
 
 
 # %% =========================================== Manual training
 importlib.reload(fid)
 importlib.reload(img_gen)
 
-epoch_count = 64
-image_plot_frequency = 8
+epoch_count = 2
+image_plot_frequency = 1
 fid_frequency = 8 #
 
 def batch_eleboration(model, generator, validation=False):
@@ -156,7 +158,8 @@ for e in range(1, epoch_count+1):
    print('Epoch: {0} exec_time={1:.1f}s  loss={2:.3f} val_loss={3:.3f}'.format(e,end_time - start_time, loss, val_loss))
 
    if(e%image_plot_frequency == 0):
-      ploters.plot_model_input_and_output(val_provider, vae) 
+      ploters.plot_same_model_input_and_output(val_x, val_y, vae, num=15) 
+      # ploters.plot_model_input_and_output(train_provider, vae, num=6) 
    if(is_fid_active and e%fid_frequency == 0):
       image_generator = img_gen.ConditionalImageGeneratorDecoder(vae_decoder, labels_provider(all_one_hot_labels, BATCH_SIZE))
       fid_frequency_metrics.append(fid.compute_fid(train_provider, image_generator, image_shape))
