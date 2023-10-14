@@ -18,6 +18,7 @@ def create_data_provider_df(
         rgb=False,
         tanh_rescale=False,
         validation_split = 0.1):
+    
     """Create an provider of images
 
     Args:
@@ -48,9 +49,9 @@ def create_data_provider_df(
 
     datagen = ImageDataGenerator(
         validation_split=validation_split,
-        rotation_range=10,
-        width_shift_range=0.1,
-        height_shift_range=0.1,
+        # rotation_range=10,
+        # width_shift_range=0.1,
+        # height_shift_range=0.1,
     ) 
 
     if(tanh_rescale):
@@ -175,6 +176,27 @@ class ConditionalImageGeneratorDecoder:
             random_sample = []
             for i in range(self.encoder_input_size):
                 random_sample.append(random.normalvariate(0, 0.6))
+            inputs.append(random_sample)
+        generated_images = self.model.predict([np.array(inputs), np.array(labels)],verbose=0)
+        
+        return generated_images
+    
+class ConditionalGANImageGenerator:
+    def __init__(self, model, label_provider):
+        self.model = model
+        self.encoder_input_size = model.layers[0].input_shape[0]
+        self.label_provider = label_provider
+
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        inputs = []
+        labels = next(self.label_provider)
+        for k in range(len(labels)):
+            random_sample = []
+            for i in range(self.encoder_input_size):
+                random_sample.append(random.normal(0, 1))
             inputs.append(random_sample)
         generated_images = self.model.predict([np.array(inputs), np.array(labels)],verbose=0)
         

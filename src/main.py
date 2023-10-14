@@ -31,7 +31,8 @@ import utils.df_preprocessing as preprocess
 # "Flip Flops" #916 !
 # "Formal Shoes" #637
 
-CLASSES = ["Watches", "Sunglasses", "Nail Polish"]
+CLASSES = ["Watches", "Sunglasses", "Nail Polish", "Ties", "Deodorant", "Belts"]
+
 
 def labels_provider(l, n): 
    while len(l) > 0:
@@ -51,7 +52,7 @@ importlib.reload(img_gen)
 importlib.reload(preprocess)
 
 #parameters
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 image_heigh = 80
 image_weigh = 80
 num_color_dimensions = 3 # 1 for greyscale or 3 for RGB
@@ -87,7 +88,7 @@ img_gen.plot_provided_images(train_provider)
 # %% VAE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 importlib.reload(ccvae)
 
-latent_space_dimension = 16
+latent_space_dimension = 32
 internal_dense_layers = [2048, 512]
 vae, vae_encoder, vae_decoder = ccvae.CCVAE().build_ccvae(
    image_shape, 
@@ -127,8 +128,8 @@ if (len(val_x) < 10):
 importlib.reload(fid)
 importlib.reload(img_gen)
 
-epoch_count = 2
-image_plot_frequency = 1
+epoch_count = 32
+image_plot_frequency = 4
 fid_frequency = 8 #
 
 def batch_eleboration(model, generator, validation=False):
