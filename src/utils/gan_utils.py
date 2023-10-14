@@ -55,17 +55,20 @@ def concatenate_gan_batches(real_batch_x,fake_batch_x):
     return np.concatenate((real_batch_x, fake_batch_x))
 
 #cGAN
-def get_cgan_real_batch(dataset,batch_indices,label):
-  dataset_input=dataset[0]
-  dataset_condition_info=dataset[1]
-  batch_x =[dataset_input[batch_indices],dataset_condition_info[batch_indices]]
-  batch_y=np.full(len(batch_indices),label)
+def get_cgan_real_batch(dataset,label):
+  train_x, train_condition = next(dataset)
+  #dataset_input=dataset[0]
+  #dataset_condition_info=dataset[1]
+  #batch_x =[dataset_input[batch_indices],dataset_condition_info[batch_indices]]
+  n_elem_batch = train_x.shape[0]
+  batch_x =[train_x,train_condition]
+  batch_y=np.full(n_elem_batch,label)
 
   return batch_x,batch_y
 
 def get_cgan_random_input(batch_size,noise_dim,condition_count):
   noise=np.random.normal(0, 1, size=(batch_size, noise_dim))
-  condition_info= to_categorical(np.random.randint(0, condition_count, size=batch_size),condition_count)
+  condition_info= keras.utils.to_categorical(np.random.randint(0, condition_count, size=batch_size),condition_count)
 
   return [noise,condition_info]
 

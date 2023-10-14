@@ -18,8 +18,9 @@ import utils.ploters as ploters
 
 import utils.image_generator as img_gen
 
-import gan.gan as g1
-import gan.dcgan as dcg1
+import gan.gan as g
+import gan.dcgan as dcg
+import gan.cdcgan as cdcg
 import utils.gan_utils as g_ut
 from keras.utils import to_categorical
 import utils.df_preprocessing as preprocess
@@ -28,8 +29,10 @@ import utils.df_preprocessing as preprocess
 importlib.reload(img_gen)
 importlib.reload(paths)
 importlib.reload(ploters)
-importlib.reload(g1)
+importlib.reload(g)
 importlib.reload(g_ut)
+importlib.reload(dcg)
+importlib.reload(cdcg)
 
 # %%
 #### Possible classes:
@@ -48,7 +51,7 @@ importlib.reload(g_ut)
 # "Flip Flops" #916 !
 # "Formal Shoes" #637
  
-CLASSES = ["Sunglasses"]
+CLASSES = ["Sunglasses", "Watches"]
 
 # %% DF Generator
 importlib.reload(img_gen)
@@ -58,8 +61,8 @@ importlib.reload(preprocess)
 BATCH_SIZE = 32
 image_heigh = 64
 image_weigh = 64
-num_color_dimensions = 1 # 1 for greyscale or 3 for RGB
-with_color_label = False # class label inlude article color
+num_color_dimensions = 3 # 1 for greyscale or 3 for RGB
+with_color_label = True # class label inlude article color
 
 # Computed parameters
 image_size = (image_heigh, image_weigh)
@@ -89,14 +92,14 @@ img_gen.plot_provided_images(train_provider)
 
 
 # %% DCGAN
-importlib.reload(dcg1)
-importlib.reload(g1)
+importlib.reload(dcg)
+importlib.reload(g)
 importlib.reload(g_ut)
 
 #input_noise_dim=100
 input_noise_dim=100
 
-dcgan,dcgan_generator,dcgan_discriminator=dcg1.dcGan().build_dcgan(input_noise_dim, image_shape)
+dcgan,dcgan_generator,dcgan_discriminator=dcg.dcGan().build_dcgan(input_noise_dim, image_shape)
 #dcgan.summary()
 dcgan_generator.summary()
 dcgan_discriminator.summary()
@@ -119,7 +122,7 @@ dcgan.compile(loss='binary_crossentropy', optimizer=optimizer_gen)
 
 epoch_count=50
 
-d_epoch_losses,g_epoch_losses=g1.Gan().train_gan(dcgan,
+d_epoch_losses,g_epoch_losses=g.Gan().train_gan(dcgan,
                                         dcgan_generator,
                                         dcgan_discriminator,
                                         train_provider,
@@ -137,4 +140,54 @@ d_epoch_losses,g_epoch_losses=g1.Gan().train_gan(dcgan,
                                         image_shape=image_shape)
 
 ploters.plot_gan_losses(d_epoch_losses,g_epoch_losses)
+# %% CDCGAN
+importlib.reload(cdcg)
+importlib.reload(g)
+importlib.reload(g_ut)
+
+input_noise_dim=100
+use_one_sided_labels=True
+
+cdcgan,cdcgan_generator,cdcgan_discriminator=cdcg.cdcGan().build_cdcgan(input_noise_dim, one_hot_label_len, image_shape, num_pixels)
+#cdcgan.summary()
+cdcgan_generator.summary()
+cdcgan_discriminator.summary()
+g_ut.plotcdcGAN(cdcgan)
+
 # %%
+optimizer_gen = keras.optimizers.Adam(learning_rate=0.000005)
+optimizer_dis = keras.optimizers.Adam(learning_rate=0.000005)
+
+#optimizer_gen = keras.optimizers.SGD(learning_rate=0.0001)
+#optimizer_dis = keras.optimizers.SGD(learning_rate=0.0001) 
+
+
+#optimizer_a = keras.optimizers.legacy.RMSprop()
+cdcgan_discriminator.compile(loss='binary_crossentropy', optimizer=optimizer_dis)
+
+cdcgan_discriminator.trainable = False
+cdcgan.compile(loss='binary_crossentropy', optimizer=optimizer_gen)
+
+# %%
+True
+epoch_count=100
+
+d_epoch_losses,g_epoch_losses=g.Gan().train_gan(cdcgan,
+                                        cdcgan_generator,
+                                        cdcgan_discriminator,
+                                        train_provider,
+                                        2000,
+                                        input_noise_dim,
+                                        epoch_count,
+                                        BATCH_SIZE,
+                                        g_ut.get_cgan_random_input,
+                                        g_ut.get_cgan_real_batch,
+                                        g_ut.get_cgan_fake_batch,
+                                        g_ut.concatenate_cgan_batches,
+                                        condition_count=one_hot_label_len,
+                                        use_one_sided_labels=use_one_sided_labels,
+                                        plt_frq=5,
+                                        plt_example_count=15,
+                                        image_shape=image_shape)
+ploters.plot_gan_losses(d_epoch_losses,g_epoch_losses)
+# %%True

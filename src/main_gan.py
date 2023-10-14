@@ -50,16 +50,16 @@ importlib.reload(g_ut)
 # "Flip Flops" #916 !
 # "Formal Shoes" #637
  
-CLASSES = ["Sunglasses"]
+CLASSES = ["Sunglasses", "Backpacks"]
 # %% DF Generator
 importlib.reload(img_gen)
 importlib.reload(preprocess)
 
 #parameters
-BATCH_SIZE = 128
+BATCH_SIZE = 32
 image_heigh = 64
 image_weigh = 64
-num_color_dimensions = 3 # 1 for greyscale or 3 for RGB
+num_color_dimensions = 1 # 1 for greyscale or 3 for RGB
 with_color_label = False # class label inlude article color
 
 # Computed parameters
@@ -89,78 +89,30 @@ else:
 img_gen.plot_provided_images(train_provider)
 
 # %% Tips prof, ma il normalize input non serve, no?
-importlib.reload(g1)
+importlib.reload(cg1)
 importlib.reload(g_ut)
 
 generator_output_activation='tanh'
 use_one_sided_labels=True
-optimizer = keras.optimizers.legacy.Adam(learning_rate=0.0002, beta_1=0.5)
 
 input_noise_dim=100
-arr = [256,512,1024]
+arr = [128,256,512,1024]
 
 hidden_activation=layers.LeakyReLU(alpha=0.2)
 
-gan,gan_generator,gan_discriminator=g1.Gan().build_gan(input_noise_dim,
-                                              arr,
-                                              image_shape,
-                                              num_pixels,
-                                              hidden_activation,
-                                              generator_output_activation)
-
-gan_generator.summary()
-gan_discriminator.summary()
-g_ut.plotGAN(gan)
-
-
-gan_discriminator.compile(loss='binary_crossentropy', optimizer=optimizer)
-
-gan_discriminator.trainable = False
-gan.compile(loss='binary_crossentropy', optimizer=optimizer)
-
-# %%
-epoch_count=50
-
-d_epoch_losses,g_epoch_losses=g1.Gan().train_gan(gan,
-                                        gan_generator,
-                                        gan_discriminator,
-                                        train_provider,
-                                        2000, # TODO numero di immagini
-                                        input_noise_dim,
-                                        epoch_count,
-                                        BATCH_SIZE,
-                                        g_ut.get_gan_random_input,
-                                        g_ut.get_gan_real_batch,
-                                        g_ut.get_gan_fake_batch,
-                                        g_ut.concatenate_gan_batches,
-                                        use_one_sided_labels=use_one_sided_labels,
-                                        plt_frq=5,
-                                        plt_example_count=15,
-                                        image_shape=image_shape)
-
-ploters.plot_gan_losses(d_epoch_losses,g_epoch_losses)
-
-input_noise_dim=100
-hidden_activation=layers.LeakyReLU(alpha=0.2)
-generator_output_activation='tanh'
-
-NUM_PIXELS = image_heigh * image_weigh * NUM_COLORS
-image_shape = (image_heigh, image_weigh, NUM_COLORS)
-arr = [256,512,1024]
-#input, cond, arr, shape, n_pixel, hidd,gen
-cg1.cGan().build_cgan
 cgan,cgan_generator,cgan_discriminator=cg1.cGan().build_cgan(input_noise_dim,
-                                                             arr,
-                                                             image_shape,
-                                                             NUM_PIXELS,
-                                                             hidden_activation,
-                                                             generator_output_activation,
-                                                             train_generator.num_classes)
-cgan.summary()
-g_ut.plotGAN(cgan)
+                                                         arr,
+                                                         image_shape,
+                                                         num_pixels,
+                                                         hidden_activation,
+                                                         generator_output_activation,
+                                                         one_hot_label_len)
 
-# %%
-optimizer = keras.optimizers.legacy.Adam(learning_rate=0.0002, beta_1=0.5)
+cgan_generator.summary()
+cgan_discriminator.summary()
+g_ut.plotcGAN(cgan)
+
+optimizer = keras.optimizers.Adam(learning_rate=0.00002)
 
 cgan_discriminator.compile(loss='binary_crossentropy', optimizer=optimizer)
 
@@ -168,86 +120,25 @@ cgan_discriminator.trainable = False
 cgan.compile(loss='binary_crossentropy', optimizer=optimizer)
 
 # %%
-epoch_count=50
-batch_size=100
+importlib.reload(g1)
+epoch_count=500
 
-d_epoch_losses,g_epoch_losses=train_gan(cgan,
+d_epoch_losses,g_epoch_losses=g1.Gan().train_gan(cgan,
                                         cgan_generator,
                                         cgan_discriminator,
-                                        [val_x_flatten,val_y_one_hot],
-                                        val_x_flatten.shape[0],
+                                        train_provider,
+                                        2000, # TODO numero di immagini
                                         input_noise_dim,
                                         epoch_count,
-                                        batch_size,
-                                        get_cgan_random_input,
-                                        get_cgan_real_batch,
-                                        get_cgan_fake_batch,
-                                        concatenate_cgan_batches,
-                                        condition_count=category_count,
-                                        use_one_sided_labels=True,
-                                        plt_frq=1,
-                                        plt_example_count=15)
-
-plot_gan_losses(d_epoch_losses,g_epoch_losses) 
-
-"""
-# %%
-
-gpus = tf.config.experimental.list_physical_devices('GPU')
-if gpus:
-      with tf.device('/device:GPU:0'):
-         selected_gpu = gpus[0]  # Seleziona la prima GPU
-         print(f"Stai usando la GPU: {selected_gpu.name}")
-
-# %% DCGAN
-importlib.reload(dcg1)
-importlib.reload(g1)
-importlib.reload(g_ut)
-
-with tf.device('/device:GPU:0'):
-
-   #input_noise_dim=100
-   input_noise_dim=100
-
-   NUM_PIXELS = image_heigh * image_weigh * NUM_COLORS
-   image_shape = (image_heigh, image_weigh, NUM_COLORS)
-
-   dcgan,dcgan_generator,dcgan_discriminator=dcg1.dcGan().build_dcgan(input_noise_dim)
-   #dcgan.summary()
-   dcgan_generator.summary()
-   dcgan_discriminator.summary()
-   g_ut.plotdcGAN(dcgan)
-   optimizer = keras.optimizers.Adam(clipnorm=0.01, learning_rate=0.000005, beta_1=0.8)
-   #optimizer_a = keras.optimizers.legacy.RMSprop()
-   dcgan_discriminator.compile(loss='binary_crossentropy', optimizer=optimizer)
-
-   dcgan_discriminator.trainable = False
-   dcgan.compile(loss='binary_crossentropy', optimizer=optimizer)
-
-# %%
-
-epoch_count=20
-#batch_size=32
-batch_size=64
-#batch_size=128
-with tf.device('/device:GPU:0'):
-   d_epoch_losses,g_epoch_losses=g1.Gan().train_gan(dcgan,
-                                        dcgan_generator,
-                                        dcgan_discriminator,
-                                        train_generator,
-                                        2000,
-                                        input_noise_dim,
-                                        epoch_count,
-                                        batch_size,
-                                        g_ut.get_gan_random_input,
-                                        g_ut.get_gan_real_batch,
-                                        g_ut.get_gan_fake_batch,
-                                        g_ut.concatenate_gan_batches,
-                                        use_one_sided_labels=True,
-                                        plt_frq=2,
+                                        BATCH_SIZE,
+                                        g_ut.get_cgan_random_input,
+                                        g_ut.get_cgan_real_batch,
+                                        g_ut.get_cgan_fake_batch,
+                                        g_ut.concatenate_cgan_batches,
+                                        condition_count=one_hot_label_len,
+                                        use_one_sided_labels=use_one_sided_labels,
+                                        plt_frq=5,
                                         plt_example_count=15,
-                                        example_shape=image_shape)
+                                        image_shape=image_shape)
 
-   ploters.plot_gan_losses(d_epoch_losses,g_epoch_losses)
-"""
-
+ploters.plot_gan_losses(d_epoch_losses,g_epoch_losses)
