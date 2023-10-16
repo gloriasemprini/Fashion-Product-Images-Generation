@@ -86,7 +86,7 @@ if(type(train_provider) is img_gen.MultiLabelImageDataGenerator):
 else:
     all_one_hot_labels = to_categorical(train_provider.labels)
 
-img_gen.plot_provided_images(train_provider)
+ploters.plot_provided_images(train_provider)
 
 # %% Tips prof, ma il normalize input non serve, no?
 importlib.reload(cg1)

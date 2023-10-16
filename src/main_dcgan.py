@@ -1,20 +1,16 @@
 # %%
-import math
-import numpy as np
 import matplotlib.pyplot as plt
 import random
 from scipy import linalg
-import tensorflow as tf
 from tensorflow import keras
-from numba import cuda
 import importlib
-from keras import layers
 
-import graphviz
+# import graphviz
 
 import utils.paths as paths
-import utils.callbacks as callbacks
 import utils.ploters as ploters 
+
+from utils.image_provider import labels_provider
 
 import utils.image_provider as img_gen
 
@@ -24,6 +20,7 @@ import gan.cdcgan as cdcg
 import utils.gan_utils as g_ut
 from keras.utils import to_categorical
 import utils.df_preprocessing as preprocess
+import metrics.fid as fid
 
 # %%
 importlib.reload(img_gen)
@@ -50,15 +47,15 @@ importlib.reload(cdcg)
 # "Sports Shoes" #2036
 # "Flip Flops" #916 !
 # "Formal Shoes" #637
- 
-CLASSES = ["Sunglasses", "Watches", "Handbags", "Belts", "Backpacks"]
+
+CLASSES = ["Sunglasses", "Ties"]
 
 # %% DF Generator
 importlib.reload(img_gen)
 importlib.reload(preprocess)
 
 #parameters
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 image_heigh = 64
 image_weigh = 64
 num_color_dimensions = 3 # 1 for greyscale or 3 for RGB
@@ -74,13 +71,15 @@ if(with_color_label and (not rgb_on)): # error check
    raise Exception("Illegal state: color label can be used only with RGB images")
 
 class_mode = "multi_output" if(with_color_label) else "categorical"
-train_provider, val_provider  = img_gen.create_data_provider_df(
+train_provider, _  = img_gen.create_data_provider_df(
     paths.IMG_FOLDER,
     CLASSES,
     class_mode=class_mode,
     image_size=image_size,
     batch_size=BATCH_SIZE,
     rgb=rgb_on,
+    validation_split=0.001,
+    tanh_rescale=True
 )
 one_hot_label_len = train_provider.num_classes if(with_color_label) else len(train_provider.class_indices)
 if(type(train_provider) is img_gen.MultiLabelImageDataGenerator):
@@ -88,7 +87,7 @@ if(type(train_provider) is img_gen.MultiLabelImageDataGenerator):
 else:
     all_one_hot_labels = to_categorical(train_provider.labels)
 
-img_gen.plot_provided_images(train_provider)
+ploters.plot_provided_images(train_provider)
 
 
 # %% DCGAN
@@ -155,8 +154,8 @@ cdcgan_discriminator.summary()
 g_ut.plotcdcGAN(cdcgan)
 
 # %%
-optimizer_gen = keras.optimizers.Adam(learning_rate=0.000005)
-optimizer_dis = keras.optimizers.Adam(learning_rate=0.000005)
+optimizer_gen = keras.optimizers.Adam(learning_rate=0.01)
+optimizer_dis = keras.optimizers.Adam(learning_rate=0.01)
 
 #optimizer_gen = keras.optimizers.SGD(learning_rate=0.0001)
 #optimizer_dis = keras.optimizers.SGD(learning_rate=0.0001) 
@@ -170,7 +169,7 @@ cdcgan.compile(loss='binary_crossentropy', optimizer=optimizer_gen)
 
 # %%
 True
-epoch_count=50
+epoch_count=10
 
 d_epoch_losses,g_epoch_losses=g.Gan().train_gan(cdcgan,
                                         cdcgan_generator,
@@ -186,8 +185,28 @@ d_epoch_losses,g_epoch_losses=g.Gan().train_gan(cdcgan,
                                         g_ut.concatenate_cgan_batches,
                                         condition_count=one_hot_label_len,
                                         use_one_sided_labels=use_one_sided_labels,
-                                        plt_frq=5,
-                                        plt_example_count=15,
+                                        plt_frq=2,
+                                        plt_example_count=10,
                                         image_shape=image_shape)
 ploters.plot_gan_losses(d_epoch_losses,g_epoch_losses)
 # %%True
+importlib.reload(ploters)
+importlib.reload(img_gen)
+if(with_color_label):
+   ploters.plot_model_generated_colorfull_article_types(
+      cdcgan_generator, 
+      len(CLASSES), 
+      one_hot_label_len, 
+      rows=1,
+      imgProducer=img_gen.ConditionalGANImageGenerator)
+else:
+   ploters.plot_model_generated_article_types(
+      cdcgan_generator, 
+      one_hot_label_len, 
+      rows=1, 
+      cols=10,
+      imgProducer=img_gen.ConditionalGANImageGenerator)
+# %%
+image_generator = img_gen.ConditionalGANImageGenerator(cdcgan_generator, labels_provider(all_one_hot_labels, BATCH_SIZE))
+fid.compute_fid(train_provider, image_generator, image_shape)
+# %%

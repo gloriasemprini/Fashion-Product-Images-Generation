@@ -7,6 +7,22 @@ import utils.image_provider as img_gen
 import utils.paths as paths
 
 
+def plot_provided_images(generator):
+  
+    it = next(generator)
+    if(type(it) is tuple):
+       images, labels = it
+    else: 
+        images = it #it[0]
+
+ 
+    print("An image shape: ", images[1].shape)
+    plot_generated_images([images], 1, 5)
+
+    print("Images shape (numImages, high, width, numColors):")
+    print(images.shape)
+
+
 def plot_random_image(df, num=15, path=paths.IMG_FOLDER):
   """ plot random 15 images from dataframe
 
@@ -38,8 +54,6 @@ def plot_images_by_id(ids, folder=paths.IMG_FOLDER):
 
     plt.tight_layout()
     plt.show()
-
-
 
 
 
@@ -110,12 +124,12 @@ def infinite_generator(value):
 label_provider = lambda a: infinite_generator(a)
 
 ### Plot generation
-def plot_model_generated_article_types(model, one_hot_len, rows=1, cols=5):
+def plot_model_generated_article_types(model, one_hot_len, rows=1, cols=5, imgProducer=img_gen.ConditionalImageGeneratorDecoder):
   for i in range(one_hot_len):
     one_hot = np.zeros(one_hot_len, dtype=float)
     one_hot[i] = 1
     one_hots = [one_hot] * cols
-    decoderGen = img_gen.ConditionalImageGeneratorDecoder(model, label_provider(one_hots))
+    decoderGen = imgProducer(model, label_provider(one_hots))
     iterator = iter(decoderGen)
 
     generated_images=[]
@@ -124,7 +138,7 @@ def plot_model_generated_article_types(model, one_hot_len, rows=1, cols=5):
 
     plot_generated_images(generated_images,rows,cols)
 
-def plot_model_generated_colorfull_article_types(model, num_classes, one_hot_len, rows=1):
+def plot_model_generated_colorfull_article_types(model, num_classes, one_hot_len, rows=1, imgProducer=img_gen.ConditionalImageGeneratorDecoder):
   num_colors = one_hot_len - num_classes
   for clas in range(num_classes):
     one_hots = []
@@ -133,7 +147,7 @@ def plot_model_generated_colorfull_article_types(model, num_classes, one_hot_len
         one_hot[clas] = 1
         one_hot[color] = 1
         one_hots.append(one_hot)
-    decoderGen = img_gen.ConditionalImageGeneratorDecoder(model, label_provider(one_hots))
+    decoderGen = imgProducer(model, label_provider(one_hots))
 
     for row in range(rows):
       plot_generated_images([next(iter(decoderGen))],1,num_colors)

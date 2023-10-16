@@ -1,5 +1,4 @@
 from keras.preprocessing.image import ImageDataGenerator
-import utils.ploters as ploters 
 import importlib
 import numpy as np
 import random
@@ -7,7 +6,12 @@ from keras.utils import to_categorical
 from sklearn.preprocessing import LabelEncoder
 import utils.df_preprocessing as preprocess
 
-importlib.reload(ploters)
+
+def labels_provider(l, n): 
+   while len(l) > 0:
+      poped = l[:n]
+      l = l[n:]
+      yield poped
 
 def create_data_provider_df(
         data_dir, 
@@ -18,6 +22,7 @@ def create_data_provider_df(
         rgb=False,
         tanh_rescale=False,
         validation_split = 0.1):
+    
     """Create an provider of images
 
     Args:
@@ -48,9 +53,9 @@ def create_data_provider_df(
 
     datagen = ImageDataGenerator(
         validation_split=validation_split,
-        rotation_range=10,
-        width_shift_range=0.1,
-        height_shift_range=0.1,
+        # rotation_range=10,
+        # width_shift_range=0.1,
+        # height_shift_range=0.1,
     ) 
 
     if(tanh_rescale):
@@ -92,20 +97,7 @@ def create_data_provider_df(
         val_data_provider = MultiLabelImageDataGenerator(val_data_provider, articleType_encoder, color_encoder)
     
     return train_data_provider, val_data_provider
-def plot_provided_images(generator):
-  
-    it = next(generator)
-    if(type(it) is tuple):
-       images, labels = it
-    else: 
-        images = it #it[0]
 
- 
-    print("An image shape: ", images[1].shape)
-    ploters.plot_generated_images([images], 1, 5)
-
-    print("Images shape (numImages, high, width, numColors):")
-    print(images.shape)
     # train_x_flatten=np.reshape(images,(images.shape[0],-1))
     # print(train_x_flatten.shape)
 
@@ -178,6 +170,27 @@ class ConditionalImageGeneratorDecoder:
             inputs.append(random_sample)
         generated_images = self.model.predict([np.array(inputs), np.array(labels)],verbose=0)
         
+        return generated_images
+    
+class ConditionalGANImageGenerator:
+    def __init__(self, model, label_provider):
+        self.model = model
+        self.encoder_input_size = model.layers[0].input_shape[0][1]
+        self.label_provider = label_provider
+
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        inputs = []
+        labels = next(self.label_provider)
+        for k in range(len(labels)):
+            random_sample = []
+            for i in range(self.encoder_input_size):
+                random_sample.append(np.random.normal(0, 1))
+            inputs.append(random_sample)
+        generated_images = self.model.predict([np.array(inputs), np.array(labels)],verbose=0)
+        generated_images = (generated_images * 255).astype(np.uint8)
         return generated_images
     
 class MultiLabelImageDataGenerator:

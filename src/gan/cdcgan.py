@@ -56,8 +56,8 @@ class cdcGan:
         #Discriminator
         discriminator_input_sample = layers.Input(shape=image_shape, name='discriminator_input_sample')
   
-        input_condition_dense=layers.Dense(n_pixels)(input_condition)
-        discriminator_input_condition=layers.Reshape(image_shape)(input_condition_dense)
+        input_condition_dense=layers.Dense(image_shape[0]*image_shape[1])(input_condition)
+        discriminator_input_condition=layers.Reshape((image_shape[0],image_shape[1],1))(input_condition_dense)
   
         discriminator_input = layers.Concatenate(name='discriminator_input')([discriminator_input_sample, discriminator_input_condition])
         disc_prev_layer = discriminator_input

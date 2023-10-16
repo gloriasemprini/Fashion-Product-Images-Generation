@@ -42,16 +42,17 @@ class CCVAE():
     def build_encoder(self, input, h_activation, dense_neurons):
 
       prev_layer = input
-      channels = 64
+      channels = 16
       prev_layer = self.create_conv_block(prev_layer, channels, h_activation, 4, norm=True)
       for i in range(self.num_downsampling):
           channels *= 2 
           prev_layer = self.create_downsampling_conv_block(prev_layer, channels, h_activation)
       
       channels = channels/8
-      prev_layer = self.create_conv_block(prev_layer, channels,h_activation, 1, norm=True)
+      prev_layer = self.create_conv_block(prev_layer, channels, h_activation, 1, norm=True)
       channels *= 2 
       prev_layer = self.create_downsampling_conv_block(prev_layer, channels, h_activation)
+      
 
 
       last_conv_shape = K.int_shape(prev_layer)

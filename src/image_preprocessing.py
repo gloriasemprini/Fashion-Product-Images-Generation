@@ -1,4 +1,5 @@
 # %%
+CLASSES = ["Watches", "Handbags", "Sunglasses", "Belts", "Backpacks", "Sarees", "Deodorant", "Nail Polish", "Ties", "Flip Flops", "Formal Shoes"]
 
 import importlib
 import utils.ploters as ploters 
@@ -30,6 +31,10 @@ importlib.reload(ploters)
 importlib.reload(bw)
 importlib.reload(df_preprocessing)
 
+#  %% AD HOC
+import pandas as pd
+df = pd.read_csv(paths.get_dataset_folder_file_path('styles.csv'), dtype=str)
+df = df[df.notnull()["baseColour"]] # remove null values from basecolor column
 
 
 # %%
@@ -59,10 +64,10 @@ ploters.plot_images_by_id(selected_image_ids)
 importlib.reload(ploters)
 importlib.reload(bw)
 
-for cl in ["Watches", "Sunglasses"]:
+for cl in CLASSES:
     cl_df = get_dataframe_by_article_type(df, cl)
-    bw.saveWithColors(cl_df['id'], cl + "/")
-    ploters.plot_random_image(cl_df, path=paths.COLOR_IMG_FOLDER + cl + "/")
+    bw.saveWithColors(cl_df['id'], "subset/")
+    ploters.plot_random_image(cl_df, path=paths.COLOR_IMG_FOLDER + "subset/")
 # %% Loading images into colorrrrrrrrrrr folder
 importlib.reload(ploters)
 importlib.reload(bw)
