@@ -14,6 +14,7 @@ import vae_models.ccvae as ccvae
 import utils.image_provider as img_gen
 import metrics.fid as fid
 import utils.df_preprocessing as preprocess
+from utils.image_provider import labels_provider
 
 #### Possible classes:
 
@@ -31,14 +32,10 @@ import utils.df_preprocessing as preprocess
 # "Flip Flops" #916 !
 # "Formal Shoes" #637
 
-CLASSES = ["Watches", "Sunglasses", "Nail Polish", "Ties", "Deodorant", "Belts"]
+CLASSES = ["Watches", "Sunglasses", "Nail Polish"] #, "Ties", "Deodorant", "Belts"]
 
 
-def labels_provider(l, n): 
-   while len(l) > 0:
-      poped = l[:n]
-      l = l[n:]
-      yield poped
+
 
 # %%
 importlib.reload(img_gen)
@@ -52,7 +49,7 @@ importlib.reload(img_gen)
 importlib.reload(preprocess)
 
 #parameters
-BATCH_SIZE = 64
+BATCH_SIZE = 128
 image_heigh = 80
 image_weigh = 80
 num_color_dimensions = 3 # 1 for greyscale or 3 for RGB
@@ -82,7 +79,7 @@ if(type(train_provider) is img_gen.MultiLabelImageDataGenerator):
 else:
     all_one_hot_labels = to_categorical(train_provider.labels)
 
-img_gen.plot_provided_images(train_provider)
+ploters.plot_provided_images(train_provider)
 
 
 # %% VAE <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -128,8 +125,8 @@ if (len(val_x) < 10):
 importlib.reload(fid)
 importlib.reload(img_gen)
 
-epoch_count = 32
-image_plot_frequency = 4
+epoch_count = 4
+image_plot_frequency = 2
 fid_frequency = 8 #
 
 def batch_eleboration(model, generator, validation=False):
