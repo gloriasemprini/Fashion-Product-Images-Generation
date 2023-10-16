@@ -66,11 +66,19 @@ def get_cgan_real_batch(dataset,label):
 
   return batch_x,batch_y
 
-def get_cgan_random_input(batch_size,noise_dim,condition_count):
-  noise=np.random.normal(0, 1, size=(batch_size, noise_dim))
-  condition_info= keras.utils.to_categorical(np.random.randint(0, condition_count, size=batch_size),condition_count)
+#def get_cgan_random_input(batch_size,noise_dim,condition_count):
+#  noise=np.random.normal(0, 1, size=(batch_size, noise_dim))
+#  condition_info= keras.utils.to_categorical(np.random.randint(0, condition_count, size=batch_size),condition_count)
 
-  return [noise,condition_info]
+#  return [noise,condition_info]
+
+def get_cgan_random_input(batch_size,noise_dim,condition_count):
+  colors = 10
+  noise=np.random.normal(0, 1, size=(batch_size, noise_dim))
+  condition_info= keras.utils.to_categorical(np.random.randint(0, condition_count - colors, size=batch_size),condition_count)
+  condition_colors= keras.utils.to_categorical(np.random.randint(0, colors, size=batch_size),condition_count)
+
+  return [noise, condition_info + condition_colors]
 
 def get_cgan_fake_batch(generator,batch_size,generator_input):
   batch_x = [generator.predict(generator_input,verbose=0),generator_input[1]]

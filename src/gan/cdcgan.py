@@ -15,9 +15,9 @@ class cdcGan:
     def build_cdcgan(self, input_noise_dim, condition_dim, image_shape, n_pixels):
         #Generator
         #provare con 5 o 6
-        kernel_ext = 16
+        kernel_ext = 8
         #provare con anche 2
-        kernel_int = 8
+        kernel_int = 4
         
         input_noise=layers.Input(shape=input_noise_dim, name='input_noise')
         input_condition=layers.Input(shape=condition_dim, name='input_condition')
@@ -39,7 +39,7 @@ class cdcGan:
         print('shape:', gen_prev_layer.shape)
         gen_prev_layer = self.create_conv_2D_trans(gen_prev_layer, gen_prev_layer, 128, kernel_int, stride, padding="same", norm=True)
         print('shape:', gen_prev_layer.shape)
-        gen_prev_layer = self.create_conv_2D_trans(gen_prev_layer, gen_prev_layer, 64, kernel_int, 1, padding="same", norm=True)
+        gen_prev_layer = self.create_conv_2D_trans(gen_prev_layer, gen_prev_layer, 64, kernel_int, stride, padding="same", norm=True)
         print('shape:', gen_prev_layer.shape)
 
 
@@ -65,8 +65,8 @@ class cdcGan:
         print('shape:', disc_prev_layer.shape)
         disc_prev_layer = self.create_conv_2D(disc_prev_layer, disc_prev_layer, 128, kernel_int, stride, padding='same', norm=True)
         print('shape:', disc_prev_layer.shape)
-        #disc_prev_layer = self.create_conv_2D(disc_prev_layer, disc_prev_layer, 256, kernel_int, stride, padding='same', norm=True)
-        #print('shape:', disc_prev_layer.shape)
+        disc_prev_layer = self.create_conv_2D(disc_prev_layer, disc_prev_layer, 256, kernel_int, stride, padding='same', norm=True)
+        print('shape:', disc_prev_layer.shape)
 
         #for channels in reversed(channels_arr):
         #    if channels != 64:

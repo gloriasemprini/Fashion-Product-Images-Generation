@@ -142,3 +142,4 @@ d_epoch_losses,g_epoch_losses=g1.Gan().train_gan(cgan,
                                         image_shape=image_shape)
 
 ploters.plot_gan_losses(d_epoch_losses,g_epoch_losses)
+

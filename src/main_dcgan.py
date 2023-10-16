@@ -16,7 +16,7 @@ import utils.paths as paths
 import utils.callbacks as callbacks
 import utils.ploters as ploters 
 
-import utils.image_generator as img_gen
+import utils.image_provider as img_gen
 
 import gan.gan as g
 import gan.dcgan as dcg
@@ -51,7 +51,7 @@ importlib.reload(cdcg)
 # "Flip Flops" #916 !
 # "Formal Shoes" #637
  
-CLASSES = ["Sunglasses", "Watches"]
+CLASSES = ["Sunglasses", "Watches", "Handbags", "Belts", "Backpacks"]
 
 # %% DF Generator
 importlib.reload(img_gen)
@@ -170,7 +170,7 @@ cdcgan.compile(loss='binary_crossentropy', optimizer=optimizer_gen)
 
 # %%
 True
-epoch_count=100
+epoch_count=50
 
 d_epoch_losses,g_epoch_losses=g.Gan().train_gan(cdcgan,
                                         cdcgan_generator,
