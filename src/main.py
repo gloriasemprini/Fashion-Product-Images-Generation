@@ -32,7 +32,7 @@ from utils.image_provider import labels_provider
 # "Flip Flops" #916 !
 # "Formal Shoes" #637
 
-CLASSES = ["Watches", "Sunglasses", "Nail Polish"] #, "Ties", "Deodorant", "Belts"]
+CLASSES = ["Watches", "Sunglasses", "Nail Polish", "Ties", "Deodorant", "Belts", "Handbags", "Backpacks", "Flip Flops"]
 
 
 
@@ -49,7 +49,7 @@ importlib.reload(img_gen)
 importlib.reload(preprocess)
 
 #parameters
-BATCH_SIZE = 128
+BATCH_SIZE = 16
 image_heigh = 80
 image_weigh = 80
 num_color_dimensions = 3 # 1 for greyscale or 3 for RGB
@@ -98,7 +98,7 @@ vae.summary()
 keras.utils.plot_model(vae, show_shapes=True, show_layer_names=True, expand_nested=True)
 
 ### Compilation
-kl_coefficient=2
+kl_coefficient=1
 #Information needed to compute the loss function
 vae_input=vae.input
 vae_output=vae.output
@@ -121,11 +121,11 @@ if (len(val_x) < 10):
    val_x, val_y = next(val_provider) # redo 
 
 
-# %% =========================================== Manual training
+# %% ======================================================= Manual training
 importlib.reload(fid)
 importlib.reload(img_gen)
 
-epoch_count = 4
+epoch_count = 8
 image_plot_frequency = 2
 fid_frequency = 8 #
 
@@ -159,7 +159,7 @@ for e in range(1, epoch_count+1):
       ploters.plot_same_model_input_and_output(val_x, val_y, vae, num=15) 
       # ploters.plot_model_input_and_output(train_provider, vae, num=6) 
    if(is_fid_active and e%fid_frequency == 0):
-      image_generator = img_gen.ConditionalImageGeneratorDecoder(vae_decoder, labels_provider(all_one_hot_labels, BATCH_SIZE))
+      image_generator = img_gen.CCVAEImageGenerator(vae_decoder, labels_provider(all_one_hot_labels, BATCH_SIZE))
       fid_frequency_metrics.append(fid.compute_fid(train_provider, image_generator, image_shape))
 
 ploters.plot_model_input_and_output(val_provider, vae)
@@ -175,7 +175,7 @@ if(is_fid_active):
 importlib.reload(ploters)
 importlib.reload(img_gen)
 if(with_color_label):
-   ploters.plot_model_generated_colorfull_article_types(vae_decoder, len(CLASSES), one_hot_label_len, rows=2)
+   ploters.plot_model_generated_colorfull_article_types(vae_decoder, len(CLASSES), one_hot_label_len, rows=1)
 else:
    ploters.plot_model_generated_article_types(vae_decoder, one_hot_label_len, rows=1, cols=10)
 

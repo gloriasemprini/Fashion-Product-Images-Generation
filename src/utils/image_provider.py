@@ -151,7 +151,7 @@ class ImageGeneratorDecoder:
         
 #         return generated_images
     
-class ConditionalImageGeneratorDecoder:
+class CCVAEImageGenerator:
     def __init__(self, model,label_provider):
         self.model = model
         self.encoder_input_size = model.layers[0].input_shape[0][1]
@@ -166,7 +166,7 @@ class ConditionalImageGeneratorDecoder:
         for k in range(len(labels)):
             random_sample = []
             for i in range(self.encoder_input_size):
-                random_sample.append(random.normalvariate(0, 0.6))
+                random_sample.append(random.normalvariate(0, 0.65))
             inputs.append(random_sample)
         generated_images = self.model.predict([np.array(inputs), np.array(labels)],verbose=0)
         

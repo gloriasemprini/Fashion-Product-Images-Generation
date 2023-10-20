@@ -4,7 +4,7 @@ from keras import backend as K
 
 class CCVAE():
     def __init__(self):
-       self.num_downsampling = 2
+       self.num_downsampling = 3
 
     def build_ccvae(self, shape, dense_neurons, encoded_dim, hidden_activation, label_input_len):
         #Input
@@ -41,28 +41,29 @@ class CCVAE():
     
     def build_encoder(self, input, h_activation, dense_neurons):
 
-      prev_layer = input
-      channels = 16
-      prev_layer = self.create_conv_block(prev_layer, channels, h_activation, 4, norm=True)
-      for i in range(self.num_downsampling):
-          channels *= 2 
-          prev_layer = self.create_downsampling_conv_block(prev_layer, channels, h_activation)
-      
-      channels = channels/8
-      prev_layer = self.create_conv_block(prev_layer, channels, h_activation, 1, norm=True)
-      channels *= 2 
-      prev_layer = self.create_downsampling_conv_block(prev_layer, channels, h_activation)
-      
+        prev_layer = input
+        channels = 32
+        prev_layer = self.create_conv_block(prev_layer, channels, h_activation, 4, norm=True)
+        for i in range(self.num_downsampling):
+            channels *= 2 
+            prev_layer = self.create_downsampling_conv_block(prev_layer, channels, h_activation)
+        
+        channels = channels/4
+        prev_layer = self.create_conv_block(prev_layer, channels, h_activation, 1, norm=True)
+
+        channels *= 2 
+        prev_layer = self.create_downsampling_conv_block(prev_layer, channels, h_activation)
+        
 
 
-      last_conv_shape = K.int_shape(prev_layer)
+        last_conv_shape = K.int_shape(prev_layer)
 
-      prev_layer = layers.Flatten(name="Flatten")(prev_layer)
-      
-      for neuron_count in dense_neurons:
-          prev_layer=layers.Dense(neuron_count,activation=h_activation)(prev_layer)
-      
-      return prev_layer, last_conv_shape
+        prev_layer = layers.Flatten(name="Flatten")(prev_layer)
+        
+        for neuron_count in dense_neurons:
+            prev_layer=layers.Dense(neuron_count,activation=h_activation)(prev_layer)
+        
+        return prev_layer, last_conv_shape
         
 
     def build_decoder(self, input, h_activation, dense_neurons, last_conv_shape):
@@ -75,15 +76,15 @@ class CCVAE():
         prev_layer = layers.Reshape((last_conv_shape[1],last_conv_shape[2], last_conv_shape[3]))(prev_layer)
         channels = last_conv_shape[3]
 
-        channels /= 2 
-        prev_layer = self.create_upsampling_conv_block(prev_layer, channels, h_activation)
-        channels = channels*8
-        prev_layer = self.create_conv_block(prev_layer, channels,h_activation, 1, norm=True)
-
-
         for i in range(self.num_downsampling):
             channels //= 2 
             prev_layer = self.create_upsampling_conv_block(prev_layer, channels, h_activation)
+        channels = channels*4
+        prev_layer = self.create_conv_block(prev_layer, channels,h_activation, 1, norm=True)
+
+
+        channels //= 2 
+        prev_layer = self.create_upsampling_conv_block(prev_layer, channels, h_activation)
         return prev_layer
 
        
@@ -121,12 +122,9 @@ def vae_loss(vae_input,vae_ouput,mu,log_var,kl_coefficient, input_count):
   x = keras.layers.Reshape((input_count,))(vae_input)
   y = keras.layers.Reshape((input_count,))(vae_ouput)
   reconstruction_loss = keras.losses.mean_squared_error(x, y) * input_count
-  # reconstruction_loss = keras.losses.mean_squared_error(vae_input,vae_ouput) * input_count
 
   #Regularization loss
   kl_loss = 0.5 * K.sum(K.square(mu) + K.exp(log_var) - log_var - 1, axis = -1)
 
-  print(reconstruction_loss)
-  print(kl_loss)
   #Combined loss
   return reconstruction_loss + kl_coefficient*kl_loss

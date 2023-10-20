@@ -124,7 +124,7 @@ def infinite_generator(value):
 label_provider = lambda a: infinite_generator(a)
 
 ### Plot generation
-def plot_model_generated_article_types(model, one_hot_len, rows=1, cols=5, imgProducer=img_gen.ConditionalImageGeneratorDecoder):
+def plot_model_generated_article_types(model, one_hot_len, rows=1, cols=5, imgProducer=img_gen.CCVAEImageGenerator):
   for i in range(one_hot_len):
     one_hot = np.zeros(one_hot_len, dtype=float)
     one_hot[i] = 1
@@ -138,7 +138,7 @@ def plot_model_generated_article_types(model, one_hot_len, rows=1, cols=5, imgPr
 
     plot_generated_images(generated_images,rows,cols)
 
-def plot_model_generated_colorfull_article_types(model, num_classes, one_hot_len, rows=1, imgProducer=img_gen.ConditionalImageGeneratorDecoder):
+def plot_model_generated_colorfull_article_types(model, num_classes, one_hot_len, rows=1, imgProducer=img_gen.CCVAEImageGenerator):
   num_colors = one_hot_len - num_classes
   for clas in range(num_classes):
     one_hots = []

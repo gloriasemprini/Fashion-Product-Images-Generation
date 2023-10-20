@@ -32,9 +32,7 @@ importlib.reload(bw)
 importlib.reload(df_preprocessing)
 
 #  %% AD HOC
-import pandas as pd
-df = pd.read_csv(paths.get_dataset_folder_file_path('styles.csv'), dtype=str)
-df = df[df.notnull()["baseColour"]] # remove null values from basecolor column
+df = df_preprocessing.get_clean_DF()
 
 
 # %%
@@ -66,8 +64,8 @@ importlib.reload(bw)
 
 for cl in CLASSES:
     cl_df = get_dataframe_by_article_type(df, cl)
-    bw.saveWithColors(cl_df['id'], "subset/")
-    ploters.plot_random_image(cl_df, path=paths.COLOR_IMG_FOLDER + "subset/")
+    bw.saveWithColors(cl_df['id'], "subset2/subset/")
+    ploters.plot_random_image(cl_df, path=paths.COLOR_IMG_FOLDER + "subset2/subset/")
 # %% Loading images into colorrrrrrrrrrr folder
 importlib.reload(ploters)
 importlib.reload(bw)
