@@ -127,7 +127,7 @@ label_provider = lambda a: infinite_generator(a)
 def plot_model_generated_article_types(model, one_hot_len, rows=1, cols=5, imgProducer=img_gen.CCVAEImageGenerator):
   for i in range(one_hot_len):
     one_hot = np.zeros(one_hot_len, dtype=float)
-    one_hot[i] = 1
+    one_hot[i] = 1.8
     one_hots = [one_hot] * cols
     decoderGen = imgProducer(model, label_provider(one_hots))
     iterator = iter(decoderGen)

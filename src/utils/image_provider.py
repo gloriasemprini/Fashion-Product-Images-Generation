@@ -166,7 +166,7 @@ class CCVAEImageGenerator:
         for k in range(len(labels)):
             random_sample = []
             for i in range(self.encoder_input_size):
-                random_sample.append(random.normalvariate(0, 0.65))
+                random_sample.append(random.normalvariate(0, 0.9))
             inputs.append(random_sample)
         generated_images = self.model.predict([np.array(inputs), np.array(labels)],verbose=0)
         

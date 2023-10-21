@@ -35,8 +35,6 @@ from utils.image_provider import labels_provider
 CLASSES = ["Watches", "Sunglasses", "Nail Polish", "Ties", "Deodorant", "Belts", "Handbags", "Backpacks", "Flip Flops"]
 
 
-
-
 # %%
 importlib.reload(img_gen)
 importlib.reload(paths)
@@ -49,11 +47,11 @@ importlib.reload(img_gen)
 importlib.reload(preprocess)
 
 #parameters
-BATCH_SIZE = 16
+BATCH_SIZE = 128
 image_heigh = 80
 image_weigh = 80
 num_color_dimensions = 3 # 1 for greyscale or 3 for RGB
-with_color_label = True # inlude article color in label
+with_color_label = False # inlude article color in label
 
 # Computed parameters
 image_size = (image_heigh, image_weigh)
@@ -125,8 +123,8 @@ if (len(val_x) < 10):
 importlib.reload(fid)
 importlib.reload(img_gen)
 
-epoch_count = 8
-image_plot_frequency = 2
+epoch_count = 1
+image_plot_frequency = 1
 fid_frequency = 8 #
 
 def batch_eleboration(model, generator, validation=False):
