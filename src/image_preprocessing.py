@@ -88,4 +88,45 @@ ploters.plot_random_image(my_df, num=20)
 my_df = get_dataframe_by(df, "baseColour", "Rose")
 ploters.plot_random_image(my_df, num=20)
 
+# %%
+################################################### Make image square
+from PIL import Image
+import os
 
+# Set the paths to your original and destination folders
+original_folder = paths.DATASET_PATH + "subset/subset/"
+destination_folder = paths.DATASET_PATH + "square/"
+
+# Create the destination folder if it doesn't exist
+if not os.path.exists(destination_folder):
+    os.mkdir(destination_folder)
+
+# Function to add padding to an image
+def add_padding_to_image(image_path, padding_size):
+    original_image = Image.open(image_path)
+    
+    # Create a new image with the desired size and white background
+    padded_image = Image.new("RGB", (80, 80), (255, 255, 255))
+    
+    # Paste the original image in the center of the new image
+    padded_image.paste(original_image, (10, 0))
+    
+    return padded_image
+
+# Loop through all the images in the original folder
+for filename in os.listdir(original_folder):
+    if filename.endswith(".jpg") or filename.endswith(".png"):
+        image_path = os.path.join(original_folder, filename)
+        
+        # Add padding to the image
+        padded_image = add_padding_to_image(image_path, 10)
+        
+        # Save the padded image to the destination folder
+        destination_path = os.path.join(destination_folder, filename)
+        padded_image.save(destination_path)
+
+print("Padding and saving complete.")
+
+
+
+# %%
