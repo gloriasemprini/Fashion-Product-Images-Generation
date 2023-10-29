@@ -5,6 +5,7 @@ from PIL import Image
 import random
 import utils.image_provider as img_gen
 import utils.paths as paths
+from colour import Color
 
 
 def plot_provided_images(generator):
@@ -61,7 +62,7 @@ def plot_images_by_id(ids, folder=paths.IMG_FOLDER):
 
 ### Images
 def plot_generated_images(generated_images, nrows, ncols,no_space_between_plots=False, figsize=(15, 15)):
-  _, axs = plt.subplots(nrows, ncols, figsize=figsize,squeeze=False)
+  _, axs = plt.subplots(nrows, ncols, figsize=(15, ncols*5),squeeze=False)
 
   for i in range(nrows):
     for j in range(ncols):
@@ -151,6 +152,44 @@ def plot_model_generated_colorfull_article_types(model, num_classes, one_hot_len
 
     for row in range(rows):
       plot_generated_images([next(iter(decoderGen))],1,num_colors)
+
+def plot_model_generated_colorfull_article_types222(model, num_classes, one_hot_len, rows=1, imgProducer=img_gen.CCVAEImageGenerator):
+  num_colors = one_hot_len - num_classes
+  black = Color("black")
+  black.red = 0
+  steps = 20
+  generated_images = []
+  start_green = Color(rgb=(0, 0, 0))
+  end_green = Color(rgb=(0, 1, 0))
+  start_blue = Color(rgb=(0, 0, 0))
+  end_blue = Color(rgb=(0, 0, 1))
+  for i in np.arange(0, 1.2, 0.2):
+    red = Color(rgb=(i, 0 ,0))
+    end_green.red = i
+    start_green.red = i
+    tmp = end_green 
+    end_green = start_green
+    start_green = tmp
+
+    for green in list(start_green.range_to(end_green, steps)):
+      single_row = []
+      start_blue = Color(rgb=(green.red, green.green, start_blue.blue)) 
+      end_blue = Color(rgb=(green.red, green.green, end_blue.blue)) 
+      for blue in list(start_blue.range_to(end_blue,steps)):
+          # print(blue.rgb)
+          one_hot =  np.zeros(one_hot_len, dtype=float)
+          one_hot[6] = 1.2
+          one_hot[7] = blue.rgb[0]
+          one_hot[8] = blue.rgb[1]
+          one_hot[9] = blue.rgb[2]
+          single_row.append(one_hot)
+      decoderGen = imgProducer(model, label_provider(single_row))  
+      generated_images.append(next(iter(decoderGen)))
+      print(" ")
+
+
+  plot_generated_images(generated_images,steps*5,steps,True)
+
   
 
 ### History

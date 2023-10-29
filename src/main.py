@@ -16,6 +16,7 @@ import metrics.fid as fid
 import utils.df_preprocessing as preprocess
 from utils.image_provider import labels_provider
 
+
 #### Possible classes:
 
 # "Watches" #2542 !
@@ -32,7 +33,7 @@ from utils.image_provider import labels_provider
 # "Flip Flops" #916 !
 # "Formal Shoes" #637
 
-CLASSES = ["Watches", "Sunglasses", "Nail Polish", "Ties", "Deodorant", "Belts", "Handbags", "Backpacks", "Flip Flops"]
+CLASSES = ["Nail Polish", "Watches", "Sunglasses", "Sarees", "Flip Flops", "Deodorant", "Backpacks"]
 
 
 # %%
@@ -47,11 +48,11 @@ importlib.reload(img_gen)
 importlib.reload(preprocess)
 
 #parameters
-BATCH_SIZE = 128
+BATCH_SIZE = 32
 image_heigh = 80
 image_weigh = 80
 num_color_dimensions = 3 # 1 for greyscale or 3 for RGB
-with_color_label = False # inlude article color in label
+with_color_label = True # inlude article color in label
 
 # Computed parameters
 image_size = (image_heigh, image_weigh)
@@ -70,9 +71,10 @@ train_provider, val_provider  = img_gen.create_data_provider_df(
     image_size=image_size,
     batch_size=BATCH_SIZE,
     rgb=rgb_on,
+    validation_split=0.05
 )
 one_hot_label_len = train_provider.num_classes if(with_color_label) else len(train_provider.class_indices)
-if(type(train_provider) is img_gen.MultiLabelImageDataGenerator):
+if(type(train_provider) is img_gen.MultiLabelImageDataGenerator or type(train_provider) is img_gen.MultiLabelMegaColorImageDataGenerator):
     all_one_hot_labels = train_provider.labels
 else:
     all_one_hot_labels = to_categorical(train_provider.labels)
@@ -123,8 +125,8 @@ if (len(val_x) < 10):
 importlib.reload(fid)
 importlib.reload(img_gen)
 
-epoch_count = 1
-image_plot_frequency = 1
+epoch_count = 32
+image_plot_frequency = 4
 fid_frequency = 8 #
 
 def batch_eleboration(model, generator, validation=False):
@@ -172,18 +174,21 @@ if(is_fid_active):
 # %% Autogenerate new images
 importlib.reload(ploters)
 importlib.reload(img_gen)
+import numpy as np
 if(with_color_label):
-   ploters.plot_model_generated_colorfull_article_types(vae_decoder, len(CLASSES), one_hot_label_len, rows=1)
+   # ploters.plot_model_generated_colorfull_article_types(vae_decoder, len(CLASSES), one_hot_label_len, rows=5)
+   ploters.plot_model_generated_colorfull_article_types222(vae_decoder, len(CLASSES), one_hot_label_len, rows=1)
 else:
    ploters.plot_model_generated_article_types(vae_decoder, one_hot_label_len, rows=1, cols=10)
 
 if(latent_space_dimension == 2):
    ploters.plot_2d_latent_space(vae_decoder, image_shape)
 
-
+vae_decoder.save_weights
 
 
 # %%  ============= Automatic TRAINING==================== not work with label inputs
+
 epoch_count = 2
 patience=10
 
@@ -207,3 +212,56 @@ watches = train_x[0][:5] if(type(train_x) is tuple) else train_x[:5]
 ploters.plot_generated_images([watches], 1, 5)
 generated_watches = vae.predict(watches)
 ploters.plot_generated_images([generated_watches], 1, 5)
+
+# %%
+
+color_thief = ColorThief(path)
+dominant_color = color_thief.get_color(quality=1)
+palette = color_thief.get_palette(quality=1, color_count=2)
+
+
+# %% @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+from PIL import Image
+from collections import Counter
+
+path = '../dataset/squared/subset/11634.jpg'
+image = Image.open(path)
+image = image.convert("RGB")
+
+white_limit = 250
+def is_white(color):
+    r, g, b = color
+    return r > white_limit and g > white_limit and b > white_limit
+
+# Initialize a list to store non-white colors
+colors = []
+
+# Iterate through the image pixels
+for pixel in image.getdata():
+    if not is_white(pixel):
+        colors.append(pixel)
+
+kmeans = KMeans(2,  n_init=10)
+kmeans.fit(colors)
+rgb_colors = kmeans.cluster_centers_
+
+normalized_colors = [(r / 255, g / 255, b / 255) for r, g, b in rgb_colors]
+
+# %% 
+import matplotlib.pyplot as plt
+normalized_colors = y[0:20, 7:10]
+fig, ax = plt.subplots()
+
+for i, color in enumerate(normalized_colors):
+    x = i
+    square = plt.Rectangle((x, 0), 1, 1, fc=(color[0], color[1], color[2]))
+    ax.add_patch(square)
+
+ax.set_aspect('equal')
+ax.set_xlim(0, len(normalized_colors))
+ax.set_ylim(0, 1)
+ax.axis('off')
+
+plt.show()
+
+# %%

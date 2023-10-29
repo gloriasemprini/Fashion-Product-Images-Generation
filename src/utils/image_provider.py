@@ -5,6 +5,8 @@ import random
 from keras.utils import to_categorical
 from sklearn.preprocessing import LabelEncoder
 import utils.df_preprocessing as preprocess
+# import utils.magacolor_df as magacolor
+# importlib.reload(magacolor)
 
 
 def labels_provider(l, n): 
@@ -39,16 +41,21 @@ def create_data_provider_df(
         DataFrameIterator: for "categorical"and others class_mode
     """
     color_mode =  "rgb" if (rgb) else "grayscale" 
-    y = ["articleType", "baseColour"] if(class_mode=="multi_output") else "articleType"
+    y = ["articleType", "megacolors"] if(class_mode=="multi_output") else "articleType"
 
     df = preprocess.filter_articles(preprocess.get_clean_DF(), classes=classes)
-    def append_ext(id): return id+".jpg"
-    df['id'] = df['id'].apply(append_ext)
+    # def append_ext(id): return id+".jpg"
+    # df['id'] = df['id'].apply(append_ext)
     
     articleType_encoder = LabelEncoder()
     color_encoder = LabelEncoder()
     articleType_encoder.fit(df["articleType"].unique())
     color_encoder.fit(df["baseColour"].unique())
+
+    
+    # df["megacolors"] = magacolor.add_megacolor(data_dir, df)
+    # print(df["megacolors"])
+    # df.to_csv("megacolors3.csv", sep=",")
 
 
     datagen = ImageDataGenerator(
@@ -93,8 +100,10 @@ def create_data_provider_df(
         subset='validation'
     )
     if(class_mode=="multi_output"):
-        train_data_provider = MultiLabelImageDataGenerator(train_data_provider, articleType_encoder, color_encoder)
-        val_data_provider = MultiLabelImageDataGenerator(val_data_provider, articleType_encoder, color_encoder)
+        train_data_provider = MultiLabelMegaColorImageDataGenerator(train_data_provider, articleType_encoder)
+        val_data_provider = MultiLabelMegaColorImageDataGenerator(val_data_provider, articleType_encoder)
+        # train_data_provider = MultiLabelImageDataGenerator(train_data_provider, articleType_encoder, color_encoder)
+        # val_data_provider = MultiLabelImageDataGenerator(val_data_provider, articleType_encoder, color_encoder)
     
     return train_data_provider, val_data_provider
 
@@ -122,34 +131,6 @@ class ImageGeneratorDecoder:
         
         return generated_images
     
-
-    
-
-# class ConditionalImageGeneratorDecoder:
-#     def __init__(self, model, batch_size, labels):
-#         self.model = model
-#         self.batch_size = batch_size
-#         self.encoder_input_size = model.layers[0].input_shape[0][1]
-#         if(len(labels) == 1):
-#             self.labels = [labels[0] for _ in range(batch_size)]
-#         else:
-#             if(len(labels) != batch_size):
-#                 raise Exception("batch size must be equal to labels size")
-#             self.labels = labels
-
-#     def __iter__(self):
-#         return self
-    
-#     def __next__(self):
-#         inputs = []
-#         for k in range(self.batch_size):
-#             random_sample = []
-#             for i in range(self.encoder_input_size):
-#                 random_sample.append(random.normalvariate(0,0.6))
-#             inputs.append(random_sample)
-#         generated_images = self.model.predict([np.array(inputs), np.array(self.labels)],verbose=0)
-        
-#         return generated_images
     
 class CCVAEImageGenerator:
     def __init__(self, model,label_provider):
@@ -166,7 +147,7 @@ class CCVAEImageGenerator:
         for k in range(len(labels)):
             random_sample = []
             for i in range(self.encoder_input_size):
-                random_sample.append(random.normalvariate(0, 0.9))
+                random_sample.append(random.normalvariate(0, 0.5))
             inputs.append(random_sample)
         generated_images = self.model.predict([np.array(inputs), np.array(labels)],verbose=0)
         
@@ -229,4 +210,37 @@ class MultiLabelImageDataGenerator:
         return len(self.generator)
     
 
+class MultiLabelMegaColorImageDataGenerator:
+    def __init__(self, generator, articleType_encoder):
+        self.generator = generator
+        self.articleType_encoder = articleType_encoder
+        self.articl_n_classes =  len(articleType_encoder.classes_)
+        self.num_classes = self.articl_n_classes + 3
+        self.class_indicies = articleType_encoder.classes_
+
+        all_artcle = to_categorical(articleType_encoder.transform(generator.labels[0]))
+        all_colors = [np.array([float(x) for x in s.strip('[]').split()]) for s in generator.labels[1]]
+        # all_colors =  generator.labels[1]
+
+        concatenated = []
+        for i in range(len(all_artcle)):
+            concatenated.append(all_artcle[i].tolist() + all_colors[i].tolist())
+        
+        self.labels = np.array(concatenated, dtype=np.float32)
+
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        x, y = next(self.generator)
+        articleType_one_hot = to_categorical(self.articleType_encoder.transform(y[0]), num_classes=self.articl_n_classes)
+        colors_values = [[float(x) for x in s.strip('[]').split()] for s in y[1]]
+        concatenated = []
+        for i in range(len(articleType_one_hot)):
+            concatenated.append(articleType_one_hot[i].tolist() + colors_values[i])
+        
+        return x, np.array(concatenated, dtype=np.float32)
+    
+    def __len__(self):
+        return len(self.generator)
     
