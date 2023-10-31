@@ -125,32 +125,36 @@ label_provider = lambda a: infinite_generator(a)
 
 ### Plot generation
 def plot_model_generated_article_types(model, one_hot_len, rows=1, cols=5, imgProducer=img_gen.CCVAEImageGenerator):
+  generated_images=[]
   for i in range(one_hot_len):
     one_hot = np.zeros(one_hot_len, dtype=float)
-    one_hot[i] = 1.8
+    one_hot[i] = 2
     one_hots = [one_hot] * cols
     decoderGen = imgProducer(model, label_provider(one_hots))
     iterator = iter(decoderGen)
 
-    generated_images=[]
+    
     for _ in range(rows):
         generated_images.append(next(iterator))      
 
-    plot_generated_images(generated_images,rows,cols)
+  plot_generated_images(generated_images,rows*one_hot_len,cols, True)
 
 def plot_model_generated_colorfull_article_types(model, num_classes, one_hot_len, rows=1, imgProducer=img_gen.CCVAEImageGenerator):
   num_colors = one_hot_len - num_classes
+  all = []
   for clas in range(num_classes):
     one_hots = []
     for color in range(num_classes, one_hot_len):
         one_hot = np.zeros(one_hot_len, dtype=float)
-        one_hot[clas] = 1
-        one_hot[color] = 1
+        one_hot[clas] = 2
+        one_hot[color] = 2
         one_hots.append(one_hot)
     decoderGen = imgProducer(model, label_provider(one_hots))
-
-    for row in range(rows):
-      plot_generated_images([next(iter(decoderGen))],1,num_colors)
+    line = []
+    # for _ in range(rows):
+    #   line.append(next(iter(decoderGen)))
+    all.append(next(iter(decoderGen)))
+  plot_generated_images(all, num_classes, num_colors, True)
   
 
 ### History

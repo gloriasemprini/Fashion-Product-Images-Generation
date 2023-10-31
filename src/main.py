@@ -123,7 +123,7 @@ if (len(val_x) < 10):
 importlib.reload(fid)
 importlib.reload(img_gen)
 
-epoch_count = 1
+epoch_count = 4
 image_plot_frequency = 1
 fid_frequency = 8 #
 
@@ -168,7 +168,9 @@ if(is_fid_active):
    ploters.plot_fid(fid_frequency_metrics)
 
 
-
+# %%
+importlib.reload(ploters)
+importlib.reload(img_gen)
 # %% Autogenerate new images
 importlib.reload(ploters)
 importlib.reload(img_gen)

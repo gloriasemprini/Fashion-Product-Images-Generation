@@ -101,55 +101,6 @@ def create_data_provider_df(
     # train_x_flatten=np.reshape(images,(images.shape[0],-1))
     # print(train_x_flatten.shape)
 
-
-class ImageGeneratorDecoder:
-    def __init__(self, model, batch_size):
-        self.model = model
-        self.batch_size = batch_size
-        self.encoder_input_size = model.layers[0].input_shape[0][1]
-
-    def __iter__(self):
-        return self
-    
-    def __next__(self):
-        inputs = []
-        for k in range(self.batch_size):
-            random_sample = []
-            for i in range(self.encoder_input_size):
-                random_sample.append(random.normalvariate(0,1))
-            inputs.append(random_sample)
-        generated_images = self.model.predict(np.array(inputs),verbose=0)
-        
-        return generated_images
-    
-
-    
-
-# class ConditionalImageGeneratorDecoder:
-#     def __init__(self, model, batch_size, labels):
-#         self.model = model
-#         self.batch_size = batch_size
-#         self.encoder_input_size = model.layers[0].input_shape[0][1]
-#         if(len(labels) == 1):
-#             self.labels = [labels[0] for _ in range(batch_size)]
-#         else:
-#             if(len(labels) != batch_size):
-#                 raise Exception("batch size must be equal to labels size")
-#             self.labels = labels
-
-#     def __iter__(self):
-#         return self
-    
-#     def __next__(self):
-#         inputs = []
-#         for k in range(self.batch_size):
-#             random_sample = []
-#             for i in range(self.encoder_input_size):
-#                 random_sample.append(random.normalvariate(0,0.6))
-#             inputs.append(random_sample)
-#         generated_images = self.model.predict([np.array(inputs), np.array(self.labels)],verbose=0)
-        
-#         return generated_images
     
 class CCVAEImageGenerator:
     def __init__(self, model,label_provider):
@@ -166,7 +117,7 @@ class CCVAEImageGenerator:
         for k in range(len(labels)):
             random_sample = []
             for i in range(self.encoder_input_size):
-                random_sample.append(random.normalvariate(0, 0.9))
+                random_sample.append(random.normalvariate(0, 0.5))
             inputs.append(random_sample)
         generated_images = self.model.predict([np.array(inputs), np.array(labels)],verbose=0)
         
