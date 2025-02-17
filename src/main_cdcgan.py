@@ -12,7 +12,7 @@ import utils.ploters as ploters
 from utils.image_provider import labels_provider
 import utils.image_provider as img_gen
 import gan.gan as g
-import gan.cdcgan as cdcg
+import gan.cdcgan_today as cdcg
 import utils.gan_utils as g_ut
 from keras.utils import to_categorical
 import utils.df_preprocessing as preprocess
@@ -23,11 +23,10 @@ importlib.reload(paths)
 importlib.reload(ploters)
 importlib.reload(g)
 importlib.reload(g_ut)
-importlib.reload(dcg)
 importlib.reload(cdcg)
 
 # %% Definizione delle classi
-CLASSES = ["Sunglasses",]
+CLASSES = ["Sunglasses"]
 
 # %% DF Generator
 importlib.reload(img_gen)
@@ -84,16 +83,16 @@ cdcgan_discriminator.summary()
 g_ut.plotcdcGAN(cdcgan)
 
 # Ottimizzatori
-optimizer_gen = keras.optimizers.Adam(learning_rate=0.01)
-optimizer_dis = keras.optimizers.Adam(learning_rate=0.01)
+optimizer_gen = keras.optimizers.Adam(learning_rate=0.0001)
+optimizer_dis = keras.optimizers.Adam(learning_rate=0.0001)
 
 cdcgan_discriminator.compile(loss='binary_crossentropy', optimizer=optimizer_dis)
 cdcgan_discriminator.trainable = False
 cdcgan.compile(loss='binary_crossentropy', optimizer=optimizer_gen)
 
-# %% Allenamento CDCGAN
-epoch_count = 10
-d_epoch_losses, g_epoch_losses = g.Gan().train_gan(
+# %% -------------------------------- Allenamento CDCGAN
+epoch_count = 100
+d_epoch_losses, g_epoch_losses = cdcg.cdcGan().train_gan(
     cdcgan,
     cdcgan_generator,
     cdcgan_discriminator,

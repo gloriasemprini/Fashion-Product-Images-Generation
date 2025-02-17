@@ -11,7 +11,7 @@ import utils.ploters as ploters
 import utils.gan_utils as gu1
 
 
-class cdcGan:
+class old_cdcGan:
     def build_cdcgan(self, input_noise_dim, condition_dim, image_shape, n_pixels):
         #Generator
         #provare con 5 o 6

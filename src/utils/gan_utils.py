@@ -33,15 +33,11 @@ def get_gan_real_batch(dataset_x,label):
     #batch_y=np.full(len(batch_indices),label)
     n_elem_batch = train_x.shape[0]
     batch_y=np.full(n_elem_batch,label)
+    print(f"[DEBUG] Real batch min: {train_x.min()}, max: {train_x.max()}")
     return train_x,batch_y
   
 def get_gan_random_input(batch_size,noise_dim,*_):
     return np.random.normal(0, 1, size=(batch_size, noise_dim))
-
-def get_gan_fake_batch(generator,batch_size,generator_input):
-    batch_x = generator.predict(generator_input,verbose=0)
-    batch_y=np.zeros(batch_size)
-    return batch_x,batch_y
   
 def get_gan_random_input(batch_size,noise_dim,*_):
     return np.random.normal(0, 1, size=(batch_size, noise_dim))
@@ -49,6 +45,7 @@ def get_gan_random_input(batch_size,noise_dim,*_):
 def get_gan_fake_batch(generator,batch_size,generator_input):
     batch_x = generator.predict(generator_input,verbose=0)
     batch_y=np.zeros(batch_size)
+    print(f"[DEBUG] Fake batch min: {batch_x.min()}, max: {batch_x.max()}")
     return batch_x,batch_y
   
 def concatenate_gan_batches(real_batch_x,fake_batch_x):
@@ -63,7 +60,8 @@ def get_cgan_real_batch(dataset,label):
   n_elem_batch = train_x.shape[0]
   batch_x =[train_x,train_condition]
   batch_y=np.full(n_elem_batch,label)
-
+  #print(f"[DEBUG] Real batch min: {train_x.min()}, max: {train_x.max()}")
+  
   return batch_x,batch_y
 
 #def get_cgan_random_input(batch_size,noise_dim,condition_count):
@@ -83,6 +81,7 @@ def get_cgan_random_input(batch_size,noise_dim,condition_count):
 def get_cgan_fake_batch(generator,batch_size,generator_input):
   batch_x = [generator.predict(generator_input,verbose=0),generator_input[1]]
   batch_y=np.zeros(batch_size)
+  #print(f"[DEBUG] Fake batch min: {batch_x[0].min()}, max: {batch_x[0].max()}")
 
   return batch_x,batch_y
 
