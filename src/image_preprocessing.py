@@ -84,7 +84,7 @@ my_df = get_dataframe_by_article_type(df, "Watches")
 # my_df = get_dataframe_by_color(df, "Fluorescent Green")
 ploters.plot_random_image(my_df, num=20)
 
-# %%
+ # %%
 my_df = get_dataframe_by(df, "baseColour", "Pink")
 ploters.plot_random_image(my_df, num=20)
 

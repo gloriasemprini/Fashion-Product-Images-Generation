@@ -155,7 +155,8 @@ class cdcGan:
             # Update the plots
             if plt_frq is not None and e % plt_frq == 0:
                 generated_output = generator.predict(noise_to_plot, verbose=0)
-                generated_output = (generated_output * 255).astype(np.uint8)
+                generated_output = (generated_output + 1) * 127.5  # Riconversione da [-1,1] a [0,255]
+                generated_output = np.clip(generated_output, 0, 255).astype(np.uint8)  # Assicura il range corretto
                 generated_images = generated_output.reshape(plt_example_count, image_shape[0], image_shape[1], image_shape[2])
                 ploters.plot_generated_images([generated_images], 1, plt_example_count, figsize=(15, 5))
 
