@@ -54,9 +54,8 @@ class cdcGan:
             disc_prev_layer = self.create_conv_2D(disc_prev_layer, channels, kernel_int, stride, padding='same', norm=True)
 
         disc_prev_layer = self.create_conv_2D(disc_prev_layer, channels_ext, kernel_int, 1, padding='same', norm=True)
-        disc_prev_layer = layers.Conv2D(1, 3, 1, padding='valid', activation='sigmoid')(disc_prev_layer)
-        disc_prev_layer = layers.Flatten()(disc_prev_layer)  # Assicura output scalare
-        discriminator_output = layers.Dense(1, activation='sigmoid', name='discriminator_output')(disc_prev_layer)
+        disc_prev_layer = layers.Conv2D(1, kernel_ext, 1, padding='valid', activation='sigmoid')(disc_prev_layer)
+        discriminator_output = layers.Reshape((1,), name='discriminator_output')(disc_prev_layer)
 
         discriminator = keras.Model([discriminator_input_sample, input_condition], discriminator_output, name='discriminator')
 
@@ -67,15 +66,15 @@ class cdcGan:
 
     def create_conv_2D_trans(self, layer, channels, kernel, stride, padding, norm=True):
         layer = layers.Conv2DTranspose(channels, kernel, strides=stride, padding=padding)(layer)
-        if norm:
-            layer = layers.BatchNormalization()(layer)
+        #if norm:
+            #layer = layers.BatchNormalization()(layer)
         layer = layers.LeakyReLU(alpha=0.2)(layer)
         return layer
     
     def create_conv_2D(self, layer, channels, kernel, stride, padding, norm=True):
         layer = layers.Conv2D(channels, kernel, strides=stride, padding=padding)(layer)
-        if norm:
-            layer = layers.BatchNormalization()(layer)
+        #if norm:
+            #layer = layers.BatchNormalization()(layer)
         layer = layers.LeakyReLU(alpha=0.2)(layer)
         return layer
     
@@ -122,14 +121,16 @@ class cdcGan:
                 discriminator_batch_y = np.concatenate((real_batch_y, fake_batch_y))
 
                 # 4. Train the discriminator
-                d_loss = discriminator.train_on_batch(discriminator_batch_x, discriminator_batch_y)
+                for _ in range(2):  # Addestra il discriminatore più frequentemente
+                    d_loss = discriminator.train_on_batch(discriminator_batch_x, discriminator_batch_y)
                 
                 # 5. Create noise vectors for the generator
                 g_loss_sum = 0
                 for _ in range(10): 
                     gan_batch_x = get_random_input_func(current_batch_size, input_noise_dim, condition_count)
-                    gan_batch_y = np.ones(current_batch_size)  # Flipped labels for training generator
-
+                    #gan_batch_y = np.ones(current_batch_size)  # Flipped labels for training generator
+                    gan_batch_y = np.random.uniform(0.8, 1.0, current_batch_size)
+                    
                     # 6. Train the generator
                     g_loss = gan.train_on_batch(gan_batch_x, gan_batch_y)
                     g_loss_sum += g_loss
@@ -159,3 +160,4 @@ class cdcGan:
                 ploters.plot_generated_images([generated_images], 1, plt_example_count, figsize=(15, 5))
 
         return d_epoch_losses, g_epoch_losses
+    

@@ -73,6 +73,10 @@ importlib.reload(cdcg)
 importlib.reload(g)
 importlib.reload(g_ut)
 
+import tensorflow as tf
+print(tf.config.list_physical_devices('GPU'))
+from tensorflow.python.client import device_lib
+print(device_lib.list_local_devices())
 input_noise_dim = 100
 use_one_sided_labels = True
 
@@ -83,8 +87,8 @@ cdcgan_discriminator.summary()
 g_ut.plotcdcGAN(cdcgan)
 
 # Ottimizzatori
-optimizer_gen = keras.optimizers.Adam(learning_rate=0.0001)
-optimizer_dis = keras.optimizers.Adam(learning_rate=0.0001)
+optimizer_gen = keras.optimizers.Adam(learning_rate=0.0002, beta_1=0.5)
+optimizer_dis = keras.optimizers.Adam(learning_rate=0.0002, beta_1=0.5)
 
 cdcgan_discriminator.compile(loss='binary_crossentropy', optimizer=optimizer_dis)
 cdcgan_discriminator.trainable = False
