@@ -141,7 +141,8 @@ class ConditionalGANImageGenerator:
                 random_sample.append(np.random.normal(0, 1))
             inputs.append(random_sample)
         generated_images = self.model.predict([np.array(inputs), np.array(labels)],verbose=0)
-        generated_images = (generated_images * 255).astype(np.uint8)
+        generated_images = (generated_images + 1) * 127.5
+        generated_images = np.clip(generated_images, 0, 255).astype(np.uint8)
         return generated_images
     
 class MultiLabelImageDataGenerator:

@@ -4,6 +4,7 @@ import random
 from scipy import linalg
 from tensorflow import keras
 import importlib
+import numpy as np
 
 # import graphviz
 
@@ -17,6 +18,12 @@ import utils.gan_utils as g_ut
 from keras.utils import to_categorical
 import utils.df_preprocessing as preprocess
 
+# set seed
+seed_value = 42  # Puoi scegliere un altro numero, l'importante è che sia fisso
+random.seed(seed_value)  # Per la randomizzazione standard di Python
+np.random.seed(seed_value)  # Per NumPy
+tf.random.set_seed(seed_value)  # Per TensorFlow
+
 # %% Ricarica dei moduli
 importlib.reload(img_gen)
 importlib.reload(paths)
@@ -26,7 +33,7 @@ importlib.reload(g_ut)
 importlib.reload(cdcg)
 
 # %% Definizione delle classi
-CLASSES = ["Sunglasses"]
+CLASSES = ["Watches"]
 
 # %% DF Generator
 importlib.reload(img_gen)
@@ -68,6 +75,11 @@ else:
 
 ploters.plot_provided_images(train_provider)
 
+# %% GPU
+import tensorflow as tf
+print(tf.config.list_physical_devices('GPU'))
+#tf.config.experimental.set_memory_growth(tf.config.list_physical_devices('GPU')[0], True)
+
 # %% CDCGAN
 importlib.reload(cdcg)
 importlib.reload(g)
@@ -75,8 +87,7 @@ importlib.reload(g_ut)
 
 import tensorflow as tf
 print(tf.config.list_physical_devices('GPU'))
-from tensorflow.python.client import device_lib
-print(device_lib.list_local_devices())
+
 input_noise_dim = 100
 use_one_sided_labels = True
 
@@ -94,8 +105,16 @@ cdcgan_discriminator.compile(loss='binary_crossentropy', optimizer=optimizer_dis
 cdcgan_discriminator.trainable = False
 cdcgan.compile(loss='binary_crossentropy', optimizer=optimizer_gen)
 
+# %% Caricamento pesi (se esistono)
+try:
+    cdcgan_generator.load_weights("generator_weights.h5")
+    cdcgan_discriminator.load_weights("discriminator_weights.h5")
+    print("Pesi caricati con successo.")
+except:
+    print("Nessun peso trovato. Il modello verrà allenato da zero.")
+
 # %% -------------------------------- Allenamento CDCGAN
-epoch_count = 100
+epoch_count = 60
 d_epoch_losses, g_epoch_losses = cdcg.cdcGan().train_gan(
     cdcgan,
     cdcgan_generator,
@@ -117,6 +136,11 @@ d_epoch_losses, g_epoch_losses = cdcg.cdcGan().train_gan(
 )
 
 ploters.plot_gan_losses(d_epoch_losses, g_epoch_losses)
+
+# %% Salvataggio dei pesi
+cdcgan_generator.save_weights("generator_weights.h5")
+cdcgan_discriminator.save_weights("discriminator_weights.h5")
+print("Pesi salvati con successo.")
 
 # %% Generazione delle immagini
 importlib.reload(ploters)
