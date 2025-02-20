@@ -6,14 +6,17 @@ from tensorflow import keras
 import importlib
 import numpy as np
 import tensorflow as tf
-# import graphviz
+import metrics.fid_cdcgan as fid
+import metrics.is_cdcgan as is_cdc
+import metrics.pl_cdcgan as pl_cdc
 
+# import graphviz
 import utils.paths as paths
 import utils.ploters as ploters 
 from utils.image_provider import labels_provider
 import utils.image_provider as img_gen
 import gan.gan as g
-import gan.cdcgan_today as cdcg
+import gan.cdcgan_metrics as cdcg
 import utils.gan_utils as g_ut
 from keras.utils import to_categorical
 import utils.df_preprocessing as preprocess
@@ -31,6 +34,8 @@ importlib.reload(ploters)
 importlib.reload(g)
 importlib.reload(g_ut)
 importlib.reload(cdcg)
+importlib.reload(is_cdc)
+importlib.reload(pl_cdc)
 
 # %% Definizione delle classi
 CLASSES = ["Watches"]
@@ -114,7 +119,7 @@ except:
     print("Nessun peso trovato. Il modello verrà allenato da zero.")
 
 # %% -------------------------------- Allenamento CDCGAN
-epoch_count = 60
+epoch_count = 80
 d_epoch_losses, g_epoch_losses = cdcg.cdcGan().train_gan(
     cdcgan,
     cdcgan_generator,
@@ -163,8 +168,9 @@ else:
         imgProducer=img_gen.ConditionalGANImageGenerator
     )
 
-# %% FID (Commentato)
-# La parte del FID è stata rimossa/commentata.
-# 
-# image_generator = img_gen.ConditionalGANImageGenerator(cdcgan_generator, labels_provider(all_one_hot_labels, BATCH_SIZE))
-# fid.compute_fid(train_provider, image_generator, image_shape)
+# %% FID
+real_data_provider, _ = img_gen.create_data_provider_df(paths.IMG_FOLDER, CLASSES, "categorical", (80, 80), 64, True)
+real_images, generated_images = fid.get_images_for_fid(real_data_provider, cdcgan_generator, BATCH_SIZE, (80, 80))
+
+fid_value = fid.calculate_fid(real_images, generated_images)
+print(f"FID: {fid_value}")
