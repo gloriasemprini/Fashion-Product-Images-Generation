@@ -32,7 +32,10 @@ def calculate_fid(real_features, generated_features):
     return fid
 
 # Funzione per generare le immagini e calcolare il FID
-def compute_fid(real_data, generated_images, image_size, batch_size=64):
+def compute_fid(real_data_provider, generator, batch_size, image_size, num_samples=1000):
+    # Ottieni le immagini reali e generate
+    real_data, generated_images = get_images_for_fid(real_data_provider, generator, batch_size, image_size, num_samples)
+    
     # Carica il modello InceptionV3
     inception_model = load_inception_model()
 
@@ -44,18 +47,42 @@ def compute_fid(real_data, generated_images, image_size, batch_size=64):
 
     # Calcola e restituisce il FID
     fid_value = calculate_fid(real_features, generated_features)
+    fid_value = np.real(fid_value)
     return fid_value
 
+
 # Funzione per ottenere immagini reali e generate per il calcolo del FID
-def get_images_for_fid(real_data_provider, generator, batch_size, image_size, num_samples=1000):
+def get_images_for_fid(real_data_provider, generator, batch_size, image_size, num_samples=None):
+    # Se non viene specificato num_samples, usa il numero di immagini nel dataset
+    if num_samples is None:
+        num_samples = len(real_data_provider)  # Calcola il numero di immagini disponibili
+
+    # Assicurati che num_samples sia un multiplo del batch_size
+    num_samples = (num_samples // batch_size) * batch_size
+
     real_images = []
+    real_labels = []  # Salva anche le etichette reali
     for i in range(num_samples // batch_size):
-        real_batch, _ = next(real_data_provider)
+        real_batch, labels = next(real_data_provider)  # Ottieni immagini e etichette
         real_images.append(real_batch)
+        real_labels.append(labels)
     
     real_images = np.concatenate(real_images, axis=0)
+    real_labels = np.concatenate(real_labels, axis=0)
+
+    # Verifica che il numero di immagini reali sia uguale a num_samples
+    assert real_images.shape[0] == num_samples, f"Numero di immagini reali non corrisponde a num_samples: {real_images.shape[0]} != {num_samples}"
+
+    # Genera rumore per il generatore
+    noise = np.random.normal(0, 1, (num_samples, 100))  # 100 è la dimensione del rumore
     
-    noise = np.random.normal(0, 1, (num_samples, 100))
-    generated_images = generator.predict(noise)
+    # Le etichette sono già raccolte da `real_data_provider`
+    generated_images = generator.predict([noise, real_labels])  # Passa sia il rumore che le etichette
+    
+    # Verifica che il numero di immagini generate sia uguale a num_samples
+    assert generated_images.shape[0] == num_samples, f"Numero di immagini generate non corrisponde a num_samples: {generated_images.shape[0]} != {num_samples}"
     
     return real_images, generated_images
+
+
+

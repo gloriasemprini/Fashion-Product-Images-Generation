@@ -8,7 +8,6 @@ import numpy as np
 import tensorflow as tf
 import metrics.fid_cdcgan as fid
 import metrics.is_cdcgan as is_cdc
-import metrics.pl_cdcgan as pl_cdc
 
 # import graphviz
 import utils.paths as paths
@@ -35,7 +34,7 @@ importlib.reload(g)
 importlib.reload(g_ut)
 importlib.reload(cdcg)
 importlib.reload(is_cdc)
-importlib.reload(pl_cdc)
+importlib.reload(fid)
 
 # %% Definizione delle classi
 CLASSES = ["Watches"]
@@ -119,7 +118,7 @@ except:
     print("Nessun peso trovato. Il modello verrà allenato da zero.")
 
 # %% -------------------------------- Allenamento CDCGAN
-epoch_count = 80
+epoch_count = 50
 d_epoch_losses, g_epoch_losses = cdcg.cdcGan().train_gan(
     cdcgan,
     cdcgan_generator,
@@ -169,8 +168,10 @@ else:
     )
 
 # %% FID
-real_data_provider, _ = img_gen.create_data_provider_df(paths.IMG_FOLDER, CLASSES, "categorical", (80, 80), 64, True)
-real_images, generated_images = fid.get_images_for_fid(real_data_provider, cdcgan_generator, BATCH_SIZE, (80, 80))
+importlib.reload(fid)
+# Esegui il calcolo del FID
+fid_value = fid.compute_fid(train_provider, cdcgan_generator, BATCH_SIZE, image_size)
 
-fid_value = fid.calculate_fid(real_images, generated_images)
 print(f"FID: {fid_value}")
+
+# %%
