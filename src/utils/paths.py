@@ -1,6 +1,6 @@
 DATASET_PATH = "../dataset/"
 
-IMG_FOLDER = DATASET_PATH + "images/images/"
+IMG_FOLDER = DATASET_PATH + "images/"
 BW_IMG_FOLDER = DATASET_PATH + "bw/"
 BW_IMG_FOLDER_INNER = BW_IMG_FOLDER + "img/"
 

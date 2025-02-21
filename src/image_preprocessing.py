@@ -14,15 +14,11 @@ import utils.df_preprocessing as df_preprocessing
 def get_dataframe_by(df, column_name, value):
     return df[df[column_name] == value]
 
-
 def get_dataframe_by_article_type(df, article_type):
     return get_dataframe_by(df, "articleType", article_type)
 
 def get_dataframe_by_color(df, color):
     return get_dataframe_by(df, "baseColour", color)
-
-
-
 
 # %% RELOAD
 importlib.reload(analysis)
@@ -84,6 +80,10 @@ my_df = get_dataframe_by_article_type(df, "Watches")
 # my_df = get_dataframe_by_color(df, "Fluorescent Green")
 ploters.plot_random_image(my_df, num=20)
 
+# %%
+my_df = get_dataframe_by_article_type(df, "Backpacks")
+# my_df = get_dataframe_by_color(df, "Fluorescent Green")
+ploters.plot_random_image(my_df, num=20)
  # %%
 my_df = get_dataframe_by(df, "baseColour", "Pink")
 ploters.plot_random_image(my_df, num=20)

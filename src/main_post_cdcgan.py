@@ -37,8 +37,19 @@ importlib.reload(is_cdc)
 importlib.reload(fid)
 
 # %% Definizione delle classi
-CLASSES = ["Sunglasses"]
+CLASSES = ["Belts"]
 #CLASSES = ["Watches", "Handbags", "Sunglasses", "Belts", "Backpacks", "Sarees", "Deodorant", "Nail Polish", "Ties", "Flip Flops", "Formal Shoes"]
+
+import os
+
+img_folder = paths.IMG_FOLDER
+all_images = os.listdir(img_folder)
+
+for img in all_images:
+    img_path = os.path.join(img_folder, img)
+    if not os.path.exists(img_path):
+        print(f"Immagine mancante: {img_path}")
+
 
 # %% DF Generator
 importlib.reload(img_gen)
@@ -119,7 +130,7 @@ except:
     print("Nessun peso trovato. Il modello verrà allenato da zero.")
 
 # %% -------------------------------- Allenamento CDCGAN
-epoch_count = 20
+epoch_count = 52
 d_epoch_losses, g_epoch_losses = cdcg.cdcGan().train_gan(
     cdcgan,
     cdcgan_generator,
@@ -143,8 +154,8 @@ d_epoch_losses, g_epoch_losses = cdcg.cdcGan().train_gan(
 ploters.plot_gan_losses(d_epoch_losses, g_epoch_losses)
 
 # %% Salvataggio dei pesi
-cdcgan_generator.save_weights("generator_weights.h5")
-cdcgan_discriminator.save_weights("discriminator_weights.h5")
+cdcgan_generator.save_weights("generator_weights_sunglasses.h5")
+cdcgan_discriminator.save_weights("discriminator_weights_sunglasses.h5")
 print("Pesi salvati con successo.")
 
 # %% Generazione delle immagini

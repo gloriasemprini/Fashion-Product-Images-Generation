@@ -21,7 +21,7 @@ def create_data_provider_df(
         image_size = (80,60), 
         rgb=False,
         tanh_rescale=False,
-        validation_split = 0.1):
+        validation_split = 0.2):
     
     """Create an provider of images
 
@@ -44,7 +44,7 @@ def create_data_provider_df(
     df = preprocess.filter_articles(preprocess.get_clean_DF(), classes=classes)
     def append_ext(id): return id+".jpg"
     df['id'] = df['id'].apply(append_ext)
-    
+
     articleType_encoder = LabelEncoder()
     color_encoder = LabelEncoder()
     articleType_encoder.fit(df["articleType"].unique())
@@ -66,9 +66,13 @@ def create_data_provider_df(
         datagen.preprocessing_function = prep_fn
     else:
         datagen.rescale = 1.0 / 255.0,  # Scale pixel values between 0 and 1
+    
+    df["subset"] = np.random.choice(["training", "validation"], p=[0.95, 0.05], size=len(df))
+    train_df = df[df["subset"] == "training"]
+    val_df = df[df["subset"] == "validation"]
 
     train_data_provider = datagen.flow_from_dataframe(
-        df,
+        train_df,
         data_dir,
         x_col="id",
         y_col=y,
@@ -77,11 +81,11 @@ def create_data_provider_df(
         batch_size=batch_size,
         class_mode=class_mode,#'input', 'categorical' 
         shuffle=True, 
-        subset='training'
+        #subset='training'
     )
 
     val_data_provider = datagen.flow_from_dataframe(
-        df,
+        val_df,
         data_dir,
         x_col="id",
         y_col=y,
@@ -90,8 +94,9 @@ def create_data_provider_df(
         batch_size=batch_size,
         class_mode=class_mode,#'input', 'categorical' 
         shuffle=True,
-        subset='validation'
+        #subset='validation'
     )
+
     if(class_mode=="multi_output"):
         train_data_provider = MultiLabelImageDataGenerator(train_data_provider, articleType_encoder, color_encoder)
         val_data_provider = MultiLabelImageDataGenerator(val_data_provider, articleType_encoder, color_encoder)

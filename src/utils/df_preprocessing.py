@@ -23,7 +23,7 @@ def get_clean_DF():
  
     black_list = [str(x) for x in black_list]
     df = df.drop(df[df["id"].isin(black_list)].index)
-
+    
     ## Colour aggregation
     baseColour = "baseColour"
     df[baseColour] = df[baseColour].replace("Lime Green", "Green")
