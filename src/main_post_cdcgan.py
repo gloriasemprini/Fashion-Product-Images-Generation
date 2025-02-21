@@ -37,7 +37,8 @@ importlib.reload(is_cdc)
 importlib.reload(fid)
 
 # %% Definizione delle classi
-CLASSES = ["Watches"]
+CLASSES = ["Sunglasses"]
+#CLASSES = ["Watches", "Handbags", "Sunglasses", "Belts", "Backpacks", "Sarees", "Deodorant", "Nail Polish", "Ties", "Flip Flops", "Formal Shoes"]
 
 # %% DF Generator
 importlib.reload(img_gen)
@@ -118,7 +119,7 @@ except:
     print("Nessun peso trovato. Il modello verrà allenato da zero.")
 
 # %% -------------------------------- Allenamento CDCGAN
-epoch_count = 50
+epoch_count = 20
 d_epoch_losses, g_epoch_losses = cdcg.cdcGan().train_gan(
     cdcgan,
     cdcgan_generator,
