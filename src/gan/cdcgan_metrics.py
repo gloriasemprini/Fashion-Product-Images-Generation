@@ -10,6 +10,7 @@ from utils.gan_utils import chunks as chk
 import utils.ploters as ploters
 import utils.gan_utils as gu1
 from metrics.is_cdcgan import calculate_inception_score
+from metrics.disc_accuracy import calculate_discriminator_accuracy
 
 
 class cdcGan:
@@ -127,7 +128,7 @@ class cdcGan:
 
                 # 5. Create noise vectors for the generator
                 g_loss_sum = 0
-                for _ in range(10): 
+                for _ in range(10):
                     gan_batch_x = get_random_input_func(current_batch_size, input_noise_dim, condition_count)
                     #gan_batch_y = np.ones(current_batch_size)  # Flipped labels for training generator
                     gan_batch_y = np.random.uniform(0.8, 1.0, current_batch_size)
@@ -152,9 +153,15 @@ class cdcGan:
             d_epoch_losses.append(avg_d_loss)
             g_epoch_losses.append(avg_g_loss)
 
+            accuracy_real, accuracy_fake = calculate_discriminator_accuracy(
+                real_batch_x[0], real_batch_x[1],  # Immagini reali + etichette reali
+                fake_batch_x[0], fake_batch_x[1],  # Immagini fake + etichette fake
+                discriminator
+            )
             end_time = time.time()
 
             print(f'Epoch: {e} exec_time={end_time - start_time:.1f}s d_loss={avg_d_loss:.3f} g_loss={avg_g_loss:.3f}')
+            print(f'Accuracy Discriminator - Real: {accuracy_real:.3f} | Fake: {accuracy_fake:.3f}')
 
             if plt_frq is not None and e % 3 == 0:  # Calcola ogni 5 epoche (puoi regolare questa frequenza)
                 print("Calculating Inception Score...")
